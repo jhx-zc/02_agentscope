@@ -53,14 +53,14 @@ def markdown_outline(path: str) -> list[dict[str, Any]]:
     # 使用MarkdownIt工具解析markdown格式的文本
     tokens: list[Token] = _markdown_parser().parse(text)
 
-    flat_headings: list[dict[str, Any]] = []
+    flat_headings: list[dict[str, Token]] = []
 
     # 第一遍：从 token 中提取标题，并记录源码行号范围。
     # markdown-it-py 会把块级元素的行号范围放在 token.map 中。
     for index, token in enumerate(tokens):
         if token.type != "heading_open" or not token.map:
             continue
-
+        # Head token之后下一个就是它的内容token， 表示该标题内容
         inline_token = tokens[index + 1] if index + 1 < len(tokens) else None
         title = inline_token.content if inline_token and inline_token.type == "inline" else ""
         level = int(token.tag.removeprefix("h"))
@@ -86,10 +86,10 @@ def markdown_outline(path: str) -> list[dict[str, Any]]:
                 heading["section_end"] = next_heading["line_start"] - 1
                 break
 
-    outline: list[dict[str, Any]] = []
-    stack: list[dict[str, Any]] = []
+    outline: list[dict[str, Token]] = []
+    stack: list[dict[str, Token]] = []
 
-    # 第二遍：用栈把扁平标题列表组织成父子树。
+    # 第二遍：用栈把扁平标题列表组织成父子树。子标题全部归纳到父标题下
     for heading in flat_headings:
         while stack and stack[-1]["level"] >= heading["level"]:
             stack.pop()
@@ -104,7 +104,7 @@ def markdown_outline(path: str) -> list[dict[str, Any]]:
     return outline
 
 
-def iter_outline(outline: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def iter_outline(outline: list[dict[str, Token]]) -> list[dict[str, Token]]:
     """Flatten a nested outline while preserving document order.
 
     Args:
@@ -114,7 +114,7 @@ def iter_outline(outline: list[dict[str, Any]]) -> list[dict[str, Any]]:
         A flat list of heading dictionaries in the order they appear in the
         Markdown document.
     """
-    headings: list[dict[str, Any]] = []
+    headings: list[dict[str, Token]] = []
 
     for heading in outline:
         headings.append(heading)
@@ -142,21 +142,25 @@ def markdown_get_section(path: str, heading: str, occurrence: int = 1) -> dict[s
         ValueError: If ``occurrence`` is less than 1 or the requested heading
         occurrence cannot be found.
     """
+
+    # 目标title的层级
     if occurrence < 1:
         raise ValueError("occurrence must be greater than or equal to 1")
 
     text = _read_markdown(path)
     lines = text.splitlines(keepends=True)
-    # 复用 outline，让所有按章节工作的工具共享同一套章节范围定义。
+    headings = iter_outline(markdown_outline(path))
+    # 获取全部标题中匹配到的这个
     matches = [
         item
-        for item in iter_outline(markdown_outline(path))
+        for item in headings
         if item["title"] == heading
     ]
 
     if len(matches) < occurrence:
         raise ValueError(f"heading {heading!r} occurrence {occurrence} was not found")
 
+    # 在计算机里 从0开始计算
     selected = matches[occurrence - 1]
     section_start = selected["section_start"]
     section_end = selected["section_end"]
@@ -191,71 +195,6 @@ def _containing_section(line_number: int, headings: list[dict[str, Any]]) -> dic
     if not matches:
         return None
     return max(matches, key=lambda heading: heading["level"])
-
-
-def markdown_list_code_blocks(path: str, language: str | None = None) -> list[dict[str, Any]]:
-    """List fenced and indented code blocks from a Markdown file.
-
-    Args:
-        path: Path to the Markdown file.
-        language: Optional language filter. For fenced blocks this matches the
-            first word after the opening fence, such as ``python`` in
-            `````python``.
-
-    Returns:
-        A list of code block dictionaries. Each item contains:
-        ``index``: 1-based index after applying the optional language filter.
-        ``type``: markdown-it token type, either ``fence`` or ``code_block``.
-        ``language``: Parsed fenced language, or ``None``.
-        ``info``: Full fenced info string.
-        ``content``: Code block body text.
-        ``line_start`` / ``line_end``: 1-based inclusive block range including
-        fences for fenced blocks.
-        ``content_start`` / ``content_end``: 1-based inclusive body range used
-        by editor tools.
-        ``section``: The containing heading section, or ``None``.
-    """
-    text = _read_markdown(path)
-    tokens = _markdown_parser().parse(text)
-    headings = iter_outline(markdown_outline(path))
-    blocks: list[dict[str, Any]] = []
-
-    # markdown-it-py 用 "fence" 表示围栏代码块，用 "code_block" 表示缩进代码块。
-    # 两类 token 都会包含 token.content 和 token.map。
-    for token in tokens:
-        if token.type not in {"fence", "code_block"} or not token.map:
-            continue
-
-        info = token.info.strip() if token.type == "fence" else ""
-        block_language = info.split(maxsplit=1)[0] if info else None
-        if language is not None and block_language != language:
-            continue
-
-        line_start = token.map[0] + 1
-        line_end = token.map[1]
-        section = _containing_section(line_start, headings)
-        block: dict[str, Any] = {
-            "index": len(blocks) + 1,
-            "type": token.type,
-            "language": block_language,
-            "info": info,
-            "content": token.content,
-            "line_start": line_start,
-            "line_end": line_end,
-            "section": section,
-        }
-
-        # 围栏代码块的 token.map 包含起止 fence 行，token.content 只包含中间代码正文。
-        if token.type == "fence":
-            block["content_start"] = line_start + 1
-            block["content_end"] = max(line_start, line_end - 1)
-        else:
-            block["content_start"] = line_start
-            block["content_end"] = line_end
-
-        blocks.append(block)
-
-    return blocks
 
 
 TASK_RE = re.compile(r"^(?P<indent>\s*)(?P<marker>[-+*])\s+\[(?P<state>[ xX])\]\s+(?P<text>.*)$")
@@ -299,74 +238,3 @@ def markdown_list_tasks(path: str) -> list[dict[str, Any]]:
         )
 
     return tasks
-
-
-def markdown_word_count(path: str) -> dict[str, Any]:
-    """Count Markdown words and estimate reading time.
-
-    Args:
-        path: Path to the Markdown file.
-
-    Returns:
-        A dictionary with:
-        ``word_count``: Count from ``mdit-py-plugins`` when available, otherwise
-        a local fallback count.
-        ``reading_time_minutes``: Estimated reading time using 200 words per
-        minute, with a minimum of 1 minute.
-        ``plugin_wordcount``: Raw plugin value, or ``None`` when unavailable.
-    """
-    text = _read_markdown(path)
-    env: dict[str, Any] = {}
-    plugin_result: Any = None
-
-    try:
-        from mdit_py_plugins.wordcount import wordcount_plugin
-    except ImportError:
-        wordcount_plugin = None
-
-    if wordcount_plugin:
-        MarkdownIt("commonmark").use(wordcount_plugin).render(text, env)
-        plugin_result = env.get("wordcount")
-
-    # 兜底统计规则：每个中日韩字符算一个单位，连续英文/数字词算一个单位。
-    # 这样即使插件不可用，函数仍然可以返回可用结果。
-    fallback_units = re.findall(r"[一-鿿]|[A-Za-z0-9_]+(?:[-'][A-Za-z0-9_]+)*", text)
-    word_count = plugin_result if isinstance(plugin_result, int) else len(fallback_units)
-
-    return {
-        "word_count": word_count,
-        "reading_time_minutes": max(1, round(word_count / 200)),
-        "plugin_wordcount": plugin_result,
-    }
-
-
-def markdown_render_html(path: str, plugins: list[str] | None = None) -> str:
-    """Render Markdown to HTML.
-
-    Args:
-        path: Path to the Markdown file.
-        plugins: Optional plugin names to enable. Supported values are
-            ``"tasklists"`` and ``"wordcount"``.
-
-    Returns:
-        Rendered HTML string.
-
-    Raises:
-        ValueError: If an unsupported plugin name is provided.
-    """
-    md = MarkdownIt("commonmark")
-
-    # 插件按需启用，默认渲染保持 CommonMark 行为，避免给普通 HTML 预览引入额外差异。
-    for plugin in plugins or []:
-        if plugin == "tasklists":
-            from mdit_py_plugins.tasklists import tasklists_plugin
-
-            md.use(tasklists_plugin)
-        elif plugin == "wordcount":
-            from mdit_py_plugins.wordcount import wordcount_plugin
-
-            md.use(wordcount_plugin)
-        else:
-            raise ValueError(f"unsupported plugin: {plugin}")
-
-    return md.render(_read_markdown(path))

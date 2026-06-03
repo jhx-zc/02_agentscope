@@ -1,7 +1,4 @@
 """Markdown Editor 工具。
-
-本模块的函数会写回磁盘。定位章节、代码块、任务项时复用 Parser 工具，
-真正修改时只对原始 Markdown 文本做小范围切片替换。
 """
 
 from __future__ import annotations
@@ -12,7 +9,6 @@ from typing import Any
 
 from agentscope_tools.parser import (
     markdown_get_section,
-    markdown_list_code_blocks,
     markdown_list_tasks,
 )
 
@@ -139,68 +135,7 @@ def markdown_insert_after_heading(
     }
 
 
-def markdown_update_code_block(
-    path: str,
-    block_index: int,
-    content: str,
-    language: str | None = None,
-) -> dict[str, Any]:
-    """Replace code block body text and optionally update fenced language.
-
-    Args:
-        path: Path to the Markdown file to modify.
-        block_index: 1-based code block index from ``markdown_list_code_blocks``.
-        content: Replacement code block body. Fence markers are preserved.
-        language: Optional new fenced code language. This is only valid for
-            fenced code blocks, not indented code blocks.
-
-    Returns:
-        A dictionary containing the modified ``path``, ``block_index``, old and
-        new languages, and old/new 1-based inclusive body ranges.
-
-    Raises:
-        ValueError: If ``block_index`` is invalid, the code block does not
-        exist, or ``language`` is requested for an indented code block.
-    """
-    if block_index < 1:
-        raise ValueError("block_index must be greater than or equal to 1")
-
-    blocks = markdown_list_code_blocks(path)
-    if len(blocks) < block_index:
-        raise ValueError(f"code block index {block_index} was not found")
-
-    block = blocks[block_index - 1]
-    lines = _read_lines(path)
-    replacement = _content_lines(content)
-
-    content_start = block["content_start"]
-    content_end = block["content_end"]
-    # 只替换代码正文；对于围栏代码块，起止 fence 行保持不变。
-    lines[content_start - 1 : content_end] = replacement
-
-    if language is not None and block["type"] == "fence":
-        opening_line_index = block["line_start"] - 1
-        # 保留原本使用的反引号或波浪线 fence，只替换 fence 后面的语言信息。
-        match = re.match(r"^(?P<fence>`{3,}|~{3,})", lines[opening_line_index])
-        if not match:
-            raise ValueError("opening fence marker was not found")
-        lines[opening_line_index] = f"{match.group('fence')} {language}\n"
-    elif language is not None:
-        raise ValueError("language can only be updated for fenced code blocks")
-
-    _write_lines(path, lines)
-
-    return {
-        "path": path,
-        "block_index": block_index,
-        "old_language": block["language"],
-        "new_language": language if language is not None else block["language"],
-        "old_range": {"start": content_start, "end": content_end},
-        "new_range": {"start": content_start, "end": content_start + len(replacement) - 1},
-    }
-
-
-def markdown_update_task(path: str, task_index: int, done: bool) -> dict[str, Any]:
+def markdown_update_task_status(path: str, task_index: int, done: bool) -> dict[str, Any]:
     """Update only the checkbox state for a task list item.
 
     Args:
