@@ -1,78 +1,41 @@
-from __future__ import annotations
+"""Parser 工具的兼容 CLI 入口。
+
+真正的 Parser、Editor、Formatter 实现在各自文件中：
+``parser_tools.py``、``editor_tools.py``、``formatter_tools.py``。
+这个模块只保留之前手动测试用的命令行入口。
+"""
 
 import argparse
 import json
-from pathlib import Path
-from typing import Any
 
-from markdown_it import MarkdownIt
-
-
-def markdown_outline(path: str) -> list[dict[str, Any]]:
-    """Return a nested heading outline for a Markdown file.
-
-    Line numbers are 1-based and inclusive. ``section_end`` is the line before
-    the next same-level or higher-level heading, or the last line of the file.
-    """
-    markdown_path = Path(path)
-    text = markdown_path.read_text(encoding="utf-8")
-    lines = text.splitlines()
-    tokens = MarkdownIt("commonmark").parse(text)
-
-    flat_headings: list[dict[str, Any]] = []
-
-    for index, token in enumerate(tokens):
-        if token.type != "heading_open" or not token.map:
-            continue
-
-        inline_token = tokens[index + 1] if index + 1 < len(tokens) else None
-        title = inline_token.content if inline_token and inline_token.type == "inline" else ""
-        level = int(token.tag.removeprefix("h"))
-        line_start = token.map[0] + 1
-        line_end = token.map[1]
-
-        flat_headings.append(
-            {
-                "level": level,
-                "title": title,
-                "line_start": line_start,
-                "line_end": line_end,
-                "section_start": line_start,
-                "section_end": len(lines),
-                "children": [],
-            }
-        )
-
-    for index, heading in enumerate(flat_headings):
-        for next_heading in flat_headings[index + 1 :]:
-            if next_heading["level"] <= heading["level"]:
-                heading["section_end"] = next_heading["line_start"] - 1
-                break
-
-    outline: list[dict[str, Any]] = []
-    stack: list[dict[str, Any]] = []
-
-    for heading in flat_headings:
-        while stack and stack[-1]["level"] >= heading["level"]:
-            stack.pop()
-
-        if stack:
-            stack[-1]["children"].append(heading)
-        else:
-            outline.append(heading)
-
-        stack.append(heading)
-
-    return outline
+from parser_tools import markdown_get_section, markdown_outline
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Print a Markdown heading outline as JSON.")
+    """Run the small JSON CLI for outlines or a single section.
+
+    Args:
+        None. Arguments are read from the command line.
+
+    Returns:
+        None. The selected outline or section is printed as JSON.
+    """
+    parser = argparse.ArgumentParser(description="Work with Markdown sections.")
     parser.add_argument("path", help="Path to the Markdown file")
+    parser.add_argument("--heading", help="Heading text to return as a section")
+    parser.add_argument("--occurrence", type=int, default=1, help="1-based heading occurrence")
     args = parser.parse_args()
 
-    print(json.dumps(markdown_outline(args.path), ensure_ascii=False, indent=2))
+    if args.heading:
+        result = markdown_get_section(args.path, args.heading, args.occurrence)
+    else:
+        result = markdown_outline(args.path)
+
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
     main()
+
+
+__all__ = ["markdown_get_section", "markdown_outline"]
