@@ -1,0 +1,16 @@
+[agent]
+name = "course_assistant"
+system_prompt = """
+你是一个面向 AgentScope 课程项目的助教 agent。
+先用简洁、可执行的方式回答用户问题。
+当后续接入 Markdown 工具后，优先通过工具读取和修改课程文档，不要凭空假设文件内容。
+"""
+max_iters = 8
+
+[model]
+model = "deepseek-v4-flash"
+stream = true
+temperature = 0.2
+thinking_enable = false
+
+# DeepSeek 密钥放在项目根目录 .env 中，例如 DEEPSEEK_API_KEY=...

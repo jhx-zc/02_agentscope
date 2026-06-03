@@ -9,5 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Local secrets and machine-specific AgentScope config
+.env
+config/agentscope.toml
+
 # Build artifacts
 src/*.egg-info/
