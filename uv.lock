@@ -3,6 +3,29 @@ revision = 3
 requires-python = ">=3.14"
 
 [[package]]
+name = "agent"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "agentscope" },
+    { name = "markdown-it-py" },
+    { name = "mdformat" },
+    { name = "mdformat-gfm" },
+    { name = "mdit-py-plugins" },
+    { name = "python-dotenv" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agentscope", specifier = ">=2.0.0" },
+    { name = "markdown-it-py", specifier = ">=4.2.0" },
+    { name = "mdformat", specifier = ">=0.7.22" },
+    { name = "mdformat-gfm", specifier = ">=0.4.1" },
+    { name = "mdit-py-plugins", specifier = ">=0.5.0" },
+    { name = "python-dotenv", specifier = ">=1.2.2" },
+]
+
+[[package]]
 name = "agentscope"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -36,29 +59,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1c/2f/5d2ace489b288a457163095a62bbafc822708e485517f4866d65ce3d561d/agentscope-2.0.0.tar.gz", hash = "sha256:333eae04d2384c05eab09df3575603fc7d9b09899599d0f175fef5c6b39fcf60", size = 292326, upload-time = "2026-05-25T15:45:07.035Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/06/9465dac42f8401ae12244de3c92c681af08544dc1e57620b3474cc2f24ee/agentscope-2.0.0-py3-none-any.whl", hash = "sha256:248cd91e61487ce45ed1fa1dc3057faa3b2e624410670cbfc202f9a6c6f279c4", size = 403016, upload-time = "2026-05-25T15:45:05.682Z" },
-]
-
-[[package]]
-name = "agentscope-tools"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "agentscope" },
-    { name = "markdown-it-py" },
-    { name = "mdformat" },
-    { name = "mdformat-gfm" },
-    { name = "mdit-py-plugins" },
-    { name = "python-dotenv" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agentscope", specifier = ">=2.0.0" },
-    { name = "markdown-it-py", specifier = ">=4.2.0" },
-    { name = "mdformat", specifier = ">=0.7.22" },
-    { name = "mdformat-gfm", specifier = ">=0.4.1" },
-    { name = "mdit-py-plugins", specifier = ">=0.5.0" },
-    { name = "python-dotenv", specifier = ">=1.2.2" },
 ]
 
 [[package]]

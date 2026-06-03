@@ -23,3 +23,7 @@ def main() -> None:
 
     prompt = args.prompt or input("You: ")
     print(asyncio.run(ask_agent(prompt, args.config)))
+
+
+if __name__ == "__main__":
+    main()

@@ -26,7 +26,6 @@ def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
     stream = bool(model_config.get("stream", True))
     temperature = _maybe_number(model_config.get("temperature"))
     max_tokens = _maybe_number(model_config.get("max_tokens"))
-    top_p = _maybe_number(model_config.get("top_p"))
     thinking_enable = bool(model_config.get("thinking_enable", False))
     reasoning_effort = model_config.get("reasoning_effort")
 
@@ -40,7 +39,6 @@ def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
     parameters = DeepSeekChatModel.Parameters(
         temperature=temperature,
         max_tokens=max_tokens,
-        top_p=top_p,
         thinking_enable=thinking_enable,
         reasoning_effort=reasoning_effort,
     )

@@ -2,10 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: main.py",
+      "name": "Python: cli.py",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/main.py",
+      "program": "${workspaceFolder}/src/cli.py",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
       "justMyCode": true
