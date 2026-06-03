@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from parser_tools import (
+from agentscope_tools.parser import (
     markdown_get_section,
     markdown_list_code_blocks,
     markdown_list_tasks,
@@ -127,7 +127,7 @@ def markdown_insert_after_heading(
     insert_at = section["line_end"]
     insertion = _content_lines(content)
 
-    # insert_at 来自 1-based 标题结束行；作为切片下标时刚好表示“标题行之后”的插入点。
+    # insert_at 来自 1-based 标题结束行；作为切片下标时刚好表示"标题行之后"的插入点。
     lines[insert_at:insert_at] = insertion
     _write_lines(path, lines)
 

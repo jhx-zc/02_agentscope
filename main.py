@@ -1,6 +1,6 @@
-def main():
-    print("Hello from 02-agentscope!")
+"""Entry point for the agentscope-tools package."""
 
+from agentscope_tools.markdown import main
 
 if __name__ == "__main__":
     main()

@@ -1,8 +1,4 @@
-"""Markdown Parser 工具。
-
-本模块只读取 Markdown 文件，不写回磁盘。Editor 工具应复用这里的解析结果，
-避免重复实现标题范围、代码块范围和任务索引逻辑。
-"""
+"""Markdown Parser 工具。"""
 
 from __future__ import annotations
 
@@ -11,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from markdown_it import MarkdownIt
+from markdown_it.token import Token
 
 
 def _read_markdown(path: str) -> str:
@@ -53,7 +50,8 @@ def markdown_outline(path: str) -> list[dict[str, Any]]:
     """
     text = _read_markdown(path)
     lines = text.splitlines()
-    tokens = _markdown_parser().parse(text)
+    # 使用MarkdownIt工具解析markdown格式的文本
+    tokens: list[Token] = _markdown_parser().parse(text)
 
     flat_headings: list[dict[str, Any]] = []
 
@@ -332,7 +330,7 @@ def markdown_word_count(path: str) -> dict[str, Any]:
 
     # 兜底统计规则：每个中日韩字符算一个单位，连续英文/数字词算一个单位。
     # 这样即使插件不可用，函数仍然可以返回可用结果。
-    fallback_units = re.findall(r"[\u4e00-\u9fff]|[A-Za-z0-9_]+(?:[-'][A-Za-z0-9_]+)*", text)
+    fallback_units = re.findall(r"[一-鿿]|[A-Za-z0-9_]+(?:[-'][A-Za-z0-9_]+)*", text)
     word_count = plugin_result if isinstance(plugin_result, int) else len(fallback_units)
 
     return {

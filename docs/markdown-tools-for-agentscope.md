@@ -39,8 +39,92 @@ html = md.render(markdown_text)
 
 `markdown-it-py` 的 block token 通常带有 `map` 字段，格式类似
 `[start_line, end_line]`。它适合定位标题、章节、代码块等块级结构。
-编辑时通常不要尝试“修改 AST 再还原 Markdown”，而是使用 token 的行号范围
+编辑时通常不要尝试”修改 AST 再还原 Markdown”，而是使用 token 的行号范围
 对原始文本做切片替换，然后用 `mdformat` 收尾。
+
+## Token 类型参考
+
+`markdown-it-py` 的 `Token.type` 字段标识了 token 代表的 Markdown 结构，
+与 `nesting` 字段（`1`=开标签，`0`=自闭合，`-1`=闭标签）配合使用。
+以下列出 CommonMark 标准的核心类型（无需额外插件即可生成）。
+
+### 块级元素（Block）
+
+这些 token 直接出现在 `md.parse(text)` 返回的顶层列表中，
+且 `token.block == True`。每个块级 token 通常带有 `token.map`（`[start_line, end_line]`），
+可用于定位源码行号。
+
+| type | nesting | tag | 含义 |
+|------|---------|-----|------|
+| `heading_open` | 1 | `h1`~`h6` | 标题开始，如 `# 标题` |
+| `heading_close` | -1 | `h1`~`h6` | 标题结束 |
+| `paragraph_open` | 1 | `p` | 段落开始 |
+| `paragraph_close` | -1 | `p` | 段落结束 |
+| `inline` | 0 | `””` | 内联内容容器，实际内容存放在 `children` 字段中 |
+| `code_block` | 0 | `code` | 缩进代码块（4 个空格或 1 个 tab） |
+| `fence` | 0 | `code` | 围栏代码块（`` ``` `` 或 `~~~`），语言在 `token.info` |
+| `hr` | 0 | `hr` | 水平分隔线 `---` / `***` / `___` |
+| `html_block` | 0 | `””` | HTML 块级标签（如 `<div>`） |
+| `blockquote_open` | 1 | `blockquote` | 引用块开始 `>` |
+| `blockquote_close` | -1 | `blockquote` | 引用块结束 |
+| `bullet_list_open` | 1 | `ul` | 无序列表开始 `-` / `*` / `+` |
+| `bullet_list_close` | -1 | `ul` | 无序列表结束 |
+| `ordered_list_open` | 1 | `ol` | 有序列表开始 `1.` |
+| `ordered_list_close` | -1 | `ol` | 有序列表结束 |
+| `list_item_open` | 1 | `li` | 列表项开始 |
+| `list_item_close` | -1 | `li` | 列表项结束 |
+| `table_open` | 1 | `table` | 表格开始 |
+| `table_close` | -1 | `table` | 表格结束 |
+| `thead_open` | 1 | `thead` | 表头开始 |
+| `thead_close` | -1 | `thead` | 表头结束 |
+| `tbody_open` | 1 | `tbody` | 表体开始 |
+| `tbody_close` | -1 | `tbody` | 表体结束 |
+| `tr_open` | 1 | `tr` | 表格行开始 |
+| `tr_close` | -1 | `tr` | 表格行结束 |
+| `th_open` | 1 | `th` | 表头单元格开始 |
+| `th_close` | -1 | `th` | 表头单元格结束 |
+| `td_open` | 1 | `td` | 表体单元格开始 |
+| `td_close` | -1 | `td` | 表体单元格结束 |
+
+### 内联元素（Inline）
+
+这些 token 不会直接出现在顶层列表中，而是作为 `inline` token 的 `children`
+出现（`token.children`）。它们描述段落内的格式化元素。
+
+| type | nesting | tag | 含义 |
+|------|---------|-----|------|
+| `em_open` | 1 | `em` | 斜体开始 `*text*` / `_text_` |
+| `em_close` | -1 | `em` | 斜体结束 |
+| `strong_open` | 1 | `strong` | 粗体开始 `**text**` / `__text__` |
+| `strong_close` | -1 | `strong` | 粗体结束 |
+| `s_open` | 1 | `s` | 删除线开始 `~~text~~`（仅 GFM 模式） |
+| `s_close` | -1 | `s` | 删除线结束（仅 GFM 模式） |
+| `link_open` | 1 | `a` | 链接开始 `[text](url)` |
+| `link_close` | -1 | `a` | 链接结束 |
+| `image` | 0 | `img` | 图片 `![alt](url)`，自闭合 |
+| `text` | 0 | `””` | 普通文本 |
+| `text_special` | 0 | `””` | 特殊字符（HTML 实体 `&amp;`、转义符 `\*`） |
+| `code_inline` | 0 | `code` | 行内代码 `` `code` `` |
+| `html_inline` | 0 | `””` | 行内 HTML（如 `<br>`） |
+| `hardbreak` | 0 | `br` | 硬换行（行末两个空格 + 换行） |
+| `softbreak` | 0 | `br` | 软换行（普通换行符） |
+
+### 嵌套结构示例
+
+解析 `# Hello **world**` 得到的 token 结构：
+
+```
+heading_open  (type=”heading_open”, tag=”h1”, nesting=1)       ← 标题开始
+└── inline    (type=”inline”, tag=””, nesting=0)                ← 内联容器（children 中放具体内容）
+    ├── text          (type=”text”,          content=”Hello “)  ← 普通文本
+    ├── strong_open   (type=”strong_open”,   tag=”strong”)      ← 粗体开始
+    │   └── text      (type=”text”,          content=”world”)   ← 粗体中的文本
+    └── strong_close  (type=”strong_close”,  tag=”strong”)      ← 粗体结束
+heading_close (type=”heading_close”, tag=”h1”, nesting=-1)      ← 标题结束
+```
+
+注意 `inline` token 自身 `nesting=0`，它的子内容通过 `token.children` 列表访问，
+而不是作为兄弟 token。这在遍历顶层 token 列表时很容易忽略内联内容。
 
 ## 基础工具
 
