@@ -1,11 +1,8 @@
-"""Initial AgentScope agent setup for the course project."""
+"""AgentScope agent creation and orchestration for the course project."""
 
 from __future__ import annotations
 
-import argparse
-import asyncio
 import os
-import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -15,43 +12,7 @@ from agentscope.message import UserMsg
 from agentscope.model import ChatModelBase, DeepSeekChatModel
 from agentscope.tool import Toolkit
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config/agentscope.toml"
-DEFAULT_ENV_PATH = PROJECT_ROOT / ".env"
-
-
-def load_dotenv(path: str | Path | None = None) -> None:
-    """Load project-level environment variables without overriding the shell."""
-    env_path = Path(path or DEFAULT_ENV_PATH)
-    if not env_path.exists():
-        return
-
-    for line in env_path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "=" not in stripped:
-            continue
-
-        key, value = stripped.split("=", 1)
-        key = key.strip().removeprefix("export ").strip()
-        value = value.strip().strip("'\"")
-        if key and key not in os.environ:
-            os.environ[key] = value
-
-
-def load_config(path: str | Path | None = None) -> dict[str, Any]:
-    """Load the optional TOML config for the starter agent."""
-    load_dotenv()
-    config_path = Path(path or os.getenv("AGENTSCOPE_CONFIG", DEFAULT_CONFIG_PATH))
-    if not config_path.exists():
-        return {}
-
-    with config_path.open("rb") as file:
-        return tomllib.load(file)
-
-
-def _maybe_number(value: Any) -> Any:
-    """Keep only configured numeric values for model parameters."""
-    return value if value is not None else None
+from agentscope_course.config import _maybe_number, load_config, load_dotenv
 
 
 def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
@@ -60,7 +21,7 @@ def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
     model_config = config or {}
     model_name = os.getenv(
         "DEEPSEEK_MODEL",
-        model_config.get("model", "deepseek-chat"),
+        model_config.get("model", "deepseek-v4-flash"),
     )
     stream = bool(model_config.get("stream", True))
     temperature = _maybe_number(model_config.get("temperature"))
@@ -123,24 +84,3 @@ async def ask_agent(prompt: str, config_path: str | Path | None = None) -> str:
     agent = create_agent(load_config(config_path))
     reply = await agent.reply(UserMsg(name="user", content=prompt))
     return reply.get_text_content() or ""
-
-
-def main() -> None:
-    """Run a one-shot AgentScope chat from the command line."""
-    parser = argparse.ArgumentParser(
-        description="Ask the starter AgentScope agent.",
-    )
-    parser.add_argument("prompt", nargs="?", help="User message for the agent")
-    parser.add_argument(
-        "--config",
-        default=None,
-        help="Path to an AgentScope TOML config file",
-    )
-    args = parser.parse_args()
-
-    prompt = args.prompt or input("You: ")
-    print(asyncio.run(ask_agent(prompt, args.config)))
-
-
-if __name__ == "__main__":
-    main()

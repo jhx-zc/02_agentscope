@@ -48,6 +48,7 @@ dependencies = [
     { name = "mdformat" },
     { name = "mdformat-gfm" },
     { name = "mdit-py-plugins" },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -57,6 +58,7 @@ requires-dist = [
     { name = "mdformat", specifier = ">=0.7.22" },
     { name = "mdformat-gfm", specifier = ">=0.4.1" },
     { name = "mdit-py-plugins", specifier = ">=0.5.0" },
+    { name = "python-dotenv", specifier = ">=1.2.2" },
 ]
 
 [[package]]

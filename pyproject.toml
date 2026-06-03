@@ -10,10 +10,11 @@ dependencies = [
     "mdit-py-plugins>=0.5.0",
     "mdformat>=0.7.22",
     "mdformat-gfm>=0.4.1",
+    "python-dotenv>=1.2.2",
 ]
 
 [project.scripts]
-course-agent = "agentscope_course.agent:main"
+course-agent = "agentscope_course.cli:main"
 markdown-tools = "agentscope_tools.markdown:main"
 
 [build-system]
