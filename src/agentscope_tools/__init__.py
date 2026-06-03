@@ -13,6 +13,7 @@ from agentscope_tools.org_tools import (
     markdown_list_tasks,
     markdown_outline,
     markdown_replace_section,
+    markdown_scan_directory,
     markdown_update_task_status,
 )
 from agentscope_tools.agentscope_wrapper import create_markdown_toolkit
@@ -23,6 +24,7 @@ __all__ = [
     "markdown_get_section",
     "markdown_list_tasks",
     "markdown_outline",
+    "markdown_scan_directory",
     # Editor
     "markdown_insert_after_heading",
     "markdown_replace_section",

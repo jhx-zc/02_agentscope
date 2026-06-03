@@ -17,6 +17,7 @@ from __future__ import annotations
 from agentscope.tool import FunctionTool, Toolkit
 
 from agentscope_tools.org_tools import (
+    WORKSPACE_ROOT,
     markdown_check_format,
     markdown_format_file,
     markdown_get_section,
@@ -24,12 +25,14 @@ from agentscope_tools.org_tools import (
     markdown_list_tasks,
     markdown_outline,
     markdown_replace_section,
+    markdown_scan_directory,
     markdown_update_task_status,
 )
 
 # ── Read-only (parser) tools ────────────────────────────────────────────
 
 _READ_ONLY_TOOLS = [
+    FunctionTool(markdown_scan_directory, is_read_only=True),
     FunctionTool(markdown_outline, is_read_only=True),
     FunctionTool(markdown_get_section, is_read_only=True),
     FunctionTool(markdown_list_tasks, is_read_only=True),
@@ -50,8 +53,15 @@ def create_markdown_toolkit() -> Toolkit:
     """Create an AgentScope ``Toolkit`` with all Markdown tools registered.
 
     Returns:
-        A ``Toolkit`` instance containing 8 tools in the ``"basic"`` tool
-        group: 4 read-only (parser / checker) and 4 mutable
+        A ``Toolkit`` instance containing 9 tools in the ``"basic"`` tool
+        group: 5 read-only (scanner / parser / checker) and 4 mutable
         (editor / formatter).
     """
-    return Toolkit(tools=_READ_ONLY_TOOLS + _MUTABLE_TOOLS)
+    instructions = (
+        f"The current workspace is {WORKSPACE_ROOT}. "
+        "Use markdown_scan_directory without a path to scan this workspace. "
+        "Use the returned file path values when calling the other Markdown tools."
+    )
+    toolkit = Toolkit(tools=_READ_ONLY_TOOLS + _MUTABLE_TOOLS)
+    toolkit.tool_groups[0].instructions = instructions
+    return toolkit

@@ -6,6 +6,7 @@ from agentscope_tools.org_tools.parser import (
     markdown_list_tasks,
     markdown_outline,
 )
+from agentscope_tools.org_tools.scanner import WORKSPACE_ROOT, markdown_scan_directory
 from agentscope_tools.org_tools.editor import (
     markdown_insert_after_heading,
     markdown_replace_section,
@@ -18,10 +19,12 @@ from agentscope_tools.org_tools.formatter import (
 
 __all__ = [
     # Parser
+    "WORKSPACE_ROOT",
     "iter_outline",
     "markdown_get_section",
     "markdown_list_tasks",
     "markdown_outline",
+    "markdown_scan_directory",
     # Editor
     "markdown_insert_after_heading",
     "markdown_replace_section",
