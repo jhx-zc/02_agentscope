@@ -8,17 +8,11 @@ from typing import Any
 
 from agentscope.agent import Agent, ReActConfig
 from agentscope.credential import DeepSeekCredential
-from agentscope.event import (
-    ToolCallDeltaEvent,
-    ToolCallEndEvent,
-    ToolCallStartEvent,
-    ToolResultEndEvent,
-    ToolResultStartEvent,
-)
-from agentscope.message import Msg, UserMsg
+from agentscope.message import UserMsg
 from agentscope.model import ChatModelBase, DeepSeekChatModel
 from agentscope.tool import Toolkit
 
+from agentscope_course.console import StreamConsoleRenderer
 from agentscope_course.config import _maybe_number, load_config, load_dotenv
 
 
@@ -105,20 +99,11 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
                 break
 
             print()  # 换行，准备输出 agent 的流式响应
+            renderer = StreamConsoleRenderer()
             async for event in agent.reply_stream(
                 UserMsg(name="user", content=user_input),
             ):
-                if isinstance(event, ToolCallStartEvent):
-                    print(f"\n🔧 [调用工具] {event.tool_call_name}")
-                elif isinstance(event, ToolCallDeltaEvent):
-                    print(f"   📥 参数: {event.delta}", end="", flush=True)
-                elif isinstance(event, ToolCallEndEvent):
-                    print()  # 工具调用参数结束后换行
-                elif isinstance(event, ToolResultStartEvent):
-                    print(f"   ⏳ 执行中 ...")
-                elif isinstance(event, ToolResultEndEvent):
-                    print(f"   ✅ 执行完成 (状态: {event.state})")
-                elif isinstance(event, Msg):
-                    print(f"\n Agent 回答: {event.get_text_content() or ''}")
+                renderer.render(event)
+            renderer.finish()
     except (KeyboardInterrupt, EOFError):
         print("\n👋 再见！")
