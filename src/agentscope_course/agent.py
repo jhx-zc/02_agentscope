@@ -8,7 +8,14 @@ from typing import Any
 
 from agentscope.agent import Agent, ReActConfig
 from agentscope.credential import DeepSeekCredential
-from agentscope.message import UserMsg
+from agentscope.event import (
+    ToolCallDeltaEvent,
+    ToolCallEndEvent,
+    ToolCallStartEvent,
+    ToolResultEndEvent,
+    ToolResultStartEvent,
+)
+from agentscope.message import Msg, UserMsg
 from agentscope.model import ChatModelBase, DeepSeekChatModel
 from agentscope.tool import Toolkit
 
@@ -77,8 +84,41 @@ def create_agent(config: dict[str, Any] | None = None) -> Agent:
     )
 
 
-async def ask_agent(prompt: str, config_path: str | Path | None = None) -> str:
-    """Send one user prompt to the starter agent and return plain text."""
+async def ask_agent(config_path: str | Path | None = None) -> None:
+    """Start an interactive conversation loop with the starter agent.
+
+    Type 'quit' or press Ctrl-C to exit.
+    """
     agent = create_agent(load_config(config_path))
-    reply = await agent.reply(UserMsg(name="user", content=prompt))
-    return reply.get_text_content() or ""
+
+    print("=" * 50)
+    print("🤖 AgentScope 助教已就绪 (输入 'quit' 退出)")
+    print("=" * 50)
+
+    try:
+        while True:
+            user_input = input("\n🧑 You: ").strip()
+            if not user_input:
+                continue
+            if user_input.lower() == "quit":
+                print("👋 再见！")
+                break
+
+            print()  # 换行，准备输出 agent 的流式响应
+            async for event in agent.reply_stream(
+                UserMsg(name="user", content=user_input),
+            ):
+                if isinstance(event, ToolCallStartEvent):
+                    print(f"\n🔧 [调用工具] {event.tool_call_name}")
+                elif isinstance(event, ToolCallDeltaEvent):
+                    print(f"   📥 参数: {event.delta}", end="", flush=True)
+                elif isinstance(event, ToolCallEndEvent):
+                    print()  # 工具调用参数结束后换行
+                elif isinstance(event, ToolResultStartEvent):
+                    print(f"   ⏳ 执行中 ...")
+                elif isinstance(event, ToolResultEndEvent):
+                    print(f"   ✅ 执行完成 (状态: {event.state})")
+                elif isinstance(event, Msg):
+                    print(f"\n Agent 回答: {event.get_text_content() or ''}")
+    except (KeyboardInterrupt, EOFError):
+        print("\n👋 再见！")
