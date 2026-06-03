@@ -14,6 +14,7 @@ from agentscope.tool import Toolkit
 
 from agentscope_course.console import StreamConsoleRenderer
 from agentscope_course.config import _maybe_number, load_config, load_dotenv
+from agentscope_course.conversation import reply_until_done
 
 
 def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
@@ -88,7 +89,7 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
     agent = create_agent(load_config(config_path))
 
     print("=" * 50)
-    print("🤖 AgentScope 助教已就绪 (输入 'quit' 退出)")
+    print("🤖 Agent已就绪 (输入 'quit' 退出)")
     print("=" * 50)
 
     try:
@@ -102,10 +103,11 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
 
             print()  # 换行，准备输出 agent 的流式响应
             renderer = StreamConsoleRenderer()
-            async for event in agent.reply_stream(
+            await reply_until_done(
+                agent,
                 UserMsg(name="user", content=user_input),
-            ):
-                renderer.render(event)
+                renderer,
+            )
             renderer.finish()
     except (KeyboardInterrupt, EOFError):
         print("\n👋 再见！")

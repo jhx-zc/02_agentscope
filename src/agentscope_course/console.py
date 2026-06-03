@@ -15,6 +15,9 @@ from agentscope.event import (
     ToolResultTextDeltaEvent,
 )
 
+_MAX_TOOL_OUTPUT_LINES = 24
+_MAX_TOOL_OUTPUT_CHARS = 4_000
+
 
 class StreamConsoleRenderer:
     """Render AgentScope stream events without breaking text deltas."""
@@ -24,8 +27,7 @@ class StreamConsoleRenderer:
         self._needs_assistant_label = True
         self._line_open = False
         self._tool_args_open = False
-        self._tool_output_open = False
-        self._tool_output_line_start = True
+        self._tool_output_parts: list[str] = []
 
     def render(self, event: Any) -> None:
         """Print one stream event in a compact, Codex-like transcript."""
@@ -41,10 +43,11 @@ class StreamConsoleRenderer:
             self._finish_open_line()
             print("   status: running")
         elif isinstance(event, ToolResultTextDeltaEvent):
-            self._render_tool_output(event.delta)
+            self._collect_tool_output(event.delta)
         elif isinstance(event, ToolResultDataDeltaEvent):
             self._render_tool_data(event)
         elif isinstance(event, ToolResultEndEvent):
+            self._flush_tool_output()
             self._finish_open_line()
             state = getattr(event.state, "value", event.state)
             print(f"   result: {state}")
@@ -52,6 +55,7 @@ class StreamConsoleRenderer:
 
     def finish(self) -> None:
         """End the current response cleanly before the next prompt."""
+        self._flush_tool_output()
         self._finish_open_line()
 
     def _render_text(self, delta: str | None) -> None:
@@ -83,15 +87,10 @@ class StreamConsoleRenderer:
         print(delta, end="", flush=True)
         self._line_open = not delta.endswith("\n")
 
-    def _render_tool_output(self, delta: str | None) -> None:
+    def _collect_tool_output(self, delta: str | None) -> None:
         if not delta:
             return
-        if not self._tool_output_open:
-            self._finish_open_line()
-            self._tool_output_open = True
-            self._tool_output_line_start = True
-        self._write_tool_output(delta)
-        self._line_open = not delta.endswith("\n")
+        self._tool_output_parts.append(delta)
 
     def _render_tool_data(self, event: ToolResultDataDeltaEvent) -> None:
         self._finish_open_line()
@@ -113,12 +112,38 @@ class StreamConsoleRenderer:
             print()
         self._line_open = False
         self._tool_args_open = False
-        self._tool_output_open = False
-        self._tool_output_line_start = True
 
-    def _write_tool_output(self, delta: str) -> None:
-        for part in delta.splitlines(keepends=True):
-            if self._tool_output_line_start:
-                print("   output: ", end="", flush=True)
-            print(part, end="", flush=True)
-            self._tool_output_line_start = part.endswith("\n")
+    def _flush_tool_output(self) -> None:
+        if not self._tool_output_parts:
+            return
+
+        text = "".join(self._tool_output_parts)
+        self._tool_output_parts.clear()
+        preview, omitted_lines, omitted_chars = self._tool_output_preview(text)
+
+        self._finish_open_line()
+        print("   output:")
+        for line in preview:
+            print(f"      {line}")
+        if omitted_lines or omitted_chars:
+            details = []
+            if omitted_lines:
+                details.append(f"{omitted_lines} lines")
+            if omitted_chars:
+                details.append(f"{omitted_chars} chars")
+            print(f"      ... omitted {', '.join(details)} from console preview")
+
+    def _tool_output_preview(self, text: str) -> tuple[list[str], int, int]:
+        lines = text.splitlines()
+        total_chars = len(text)
+        preview_text = text[:_MAX_TOOL_OUTPUT_CHARS]
+        preview_lines = preview_text.splitlines()
+
+        omitted_chars = max(0, total_chars - len(preview_text))
+        omitted_lines = max(0, len(lines) - len(preview_lines))
+
+        if len(preview_lines) > _MAX_TOOL_OUTPUT_LINES:
+            omitted_lines += len(preview_lines) - _MAX_TOOL_OUTPUT_LINES
+            preview_lines = preview_lines[:_MAX_TOOL_OUTPUT_LINES]
+
+        return preview_lines or [""], omitted_lines, omitted_chars

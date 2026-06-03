@@ -14,7 +14,14 @@ Usage::
 
 from __future__ import annotations
 
-from agentscope.tool import FunctionTool, Toolkit
+import inspect
+import json
+from collections.abc import Callable
+from functools import wraps
+from typing import Any
+
+from agentscope.message import TextBlock, ToolResultState
+from agentscope.tool import FunctionTool, ToolChunk, Toolkit
 
 from agentscope_tools.org_tools import (
     WORKSPACE_ROOT,
@@ -29,23 +36,51 @@ from agentscope_tools.org_tools import (
     markdown_update_task_status,
 )
 
+
+def _format_tool_result(result: Any) -> str:
+    """Format regular Python tool output for AgentScope tool results."""
+    if isinstance(result, str):
+        return result
+    return json.dumps(result, ensure_ascii=False, indent=2, default=str)
+
+
+def _wrap_tool_result(func: Callable[..., Any]) -> Callable[..., ToolChunk]:
+    """Adapt ordinary Python return values to AgentScope 2.0 ToolChunk."""
+
+    @wraps(func)
+    def wrapped(**kwargs: Any) -> ToolChunk:
+        result = func(**kwargs)
+        return ToolChunk(
+            content=[TextBlock(text=_format_tool_result(result))],
+            state=ToolResultState.SUCCESS,
+        )
+
+    setattr(wrapped, "__signature__", inspect.signature(func))
+    return wrapped
+
+
+def _function_tool(func: Callable[..., Any], *, is_read_only: bool) -> FunctionTool:
+    """Create an AgentScope FunctionTool for a regular Python function."""
+    return FunctionTool(_wrap_tool_result(func), is_read_only=is_read_only)
+
+
 # ── Read-only (parser) tools ────────────────────────────────────────────
 
 _READ_ONLY_TOOLS = [
-    FunctionTool(markdown_scan_directory, is_read_only=True),
-    FunctionTool(markdown_outline, is_read_only=True),
-    FunctionTool(markdown_get_section, is_read_only=True),
-    FunctionTool(markdown_list_tasks, is_read_only=True),
-    FunctionTool(markdown_check_format, is_read_only=True),
+    _function_tool(markdown_scan_directory, is_read_only=True),
+    _function_tool(markdown_outline, is_read_only=True),
+    _function_tool(markdown_get_section, is_read_only=True),
+    _function_tool(markdown_list_tasks, is_read_only=True),
+    _function_tool(markdown_check_format, is_read_only=True),
 ]
 
 # ── Mutable (editor / formatter) tools ──────────────────────────────────
 
 _MUTABLE_TOOLS = [
-    FunctionTool(markdown_replace_section, is_read_only=False),
-    FunctionTool(markdown_insert_after_heading, is_read_only=False),
-    FunctionTool(markdown_update_task_status, is_read_only=False),
-    FunctionTool(markdown_format_file, is_read_only=False),
+    _function_tool(markdown_replace_section, is_read_only=False),
+    _function_tool(markdown_insert_after_heading, is_read_only=False),
+    _function_tool(markdown_update_task_status, is_read_only=False),
+    _function_tool(markdown_format_file, is_read_only=False),
 ]
 
 
