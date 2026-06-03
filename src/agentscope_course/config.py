@@ -32,6 +32,16 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
         return tomllib.load(file)
 
 
-def _maybe_number(value: Any) -> Any:
-    """Keep only configured numeric values for model parameters."""
-    return value if value is not None else None
+def _maybe_number(value: str) -> str | int | float:
+    """try to convert string to number"""
+    try:
+        return int(value)        # "42" → 42 (int)
+    except ValueError:
+        pass
+
+    try:
+        return float(value)      # "3.14" → 3.14 (float)
+    except ValueError:
+        pass
+
+    return value                 # "hello" → "hello" (保持字符串)
