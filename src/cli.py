@@ -20,9 +20,7 @@ def main() -> None:
         help="Path to an AgentScope TOML config file",
     )
     args = parser.parse_args()
-
-    prompt = args.prompt or input("You: ")
-    print(asyncio.run(ask_agent(prompt, args.config)))
+    print(asyncio.run(ask_agent(args.config)))
 
 
 if __name__ == "__main__":

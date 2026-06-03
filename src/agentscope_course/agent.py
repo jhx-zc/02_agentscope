@@ -57,8 +57,10 @@ def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
 
 
 def create_toolkit() -> Toolkit:
-    """Create an empty toolkit; register project tools here in the next step."""
-    return Toolkit()
+    """Create a toolkit with Markdown tools registered."""
+    from agentscope_tools.agentscope_wrapper import create_markdown_toolkit
+
+    return create_markdown_toolkit()
 
 
 def create_agent(config: dict[str, Any] | None = None) -> Agent:
