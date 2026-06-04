@@ -13,7 +13,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Ask the starter AgentScope agent.",
     )
-    parser.add_argument("prompt", nargs="?", help="User message for the agent")
     parser.add_argument(
         "--config",
         default=None,
