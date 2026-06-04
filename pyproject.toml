@@ -1,5 +1,5 @@
 [project]
-name = "agent"
+name = "course-agent"
 version = "0.1.0"
 description = "Markdown parser, editor, and formatter tools for AgentScope"
 readme = "README.md"
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-agent = "cli:main"
+course-agent = "cli:main"
 
 [build-system]
 requires = ["hatchling"]
