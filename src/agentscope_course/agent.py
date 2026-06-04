@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from agentscope.agent import Agent, ReActConfig
-from agentscope.credential import DeepSeekCredential
+from agentscope.credential import OllamaCredential
 from agentscope.message import UserMsg
-from agentscope.model import ChatModelBase, DeepSeekChatModel
+from agentscope.model import ChatModelBase, OllamaChatModel
 from agentscope.tool import Toolkit
 
 from agentscope_course.console import StreamConsoleRenderer
@@ -18,38 +18,35 @@ from agentscope_course.conversation import reply_until_done
 
 
 def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
-    """Create the AgentScope DeepSeek chat model."""
+    """Create the AgentScope Ollama chat model."""
     load_dotenv()
     model_config = config or {}
     model_name = os.getenv(
-        "DEEPSEEK_MODEL",
-        model_config.get("model", "deepseek-v4-flash"),
+        "OLLAMA_MODEL",
+        model_config.get("model", "qwen3.5:4b-mlx"),
     )
     stream = bool(model_config.get("stream", True))
-    temperature = _maybe_number(model_config.get("temperature"))
-    max_tokens = _maybe_number(model_config.get("max_tokens"))
+    temperature = (
+        _maybe_number(model_config["temperature"])
+        if "temperature" in model_config
+        else None
+    )
+    max_tokens = (
+        _maybe_number(model_config["max_tokens"])
+        if "max_tokens" in model_config
+        else None
+    )
     thinking_enable = bool(model_config.get("thinking_enable", False))
-    reasoning_effort = model_config.get("reasoning_effort")
 
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key:
-        raise RuntimeError(
-            "Missing DEEPSEEK_API_KEY. Put it in the project-level .env file "
-            "or set it in your shell."
-        )
-
-    parameters = DeepSeekChatModel.Parameters(
+    parameters = OllamaChatModel.Parameters(
         temperature=temperature,
         max_tokens=max_tokens,
         thinking_enable=thinking_enable,
-        reasoning_effort=reasoning_effort,
     )
-    credential_kwargs = {"api_key": api_key}
-    base_url = os.getenv("DEEPSEEK_BASE_URL") or model_config.get("base_url")
-    if base_url:
-        credential_kwargs["base_url"] = base_url
-    credential = DeepSeekCredential(**credential_kwargs)
-    return DeepSeekChatModel(
+
+    host = os.getenv("OLLAMA_HOST") or model_config.get("host")
+    credential = OllamaCredential(host=host) if host else OllamaCredential()
+    return OllamaChatModel(
         credential=credential,
         model=model_name,
         parameters=parameters,

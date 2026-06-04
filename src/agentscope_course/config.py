@@ -32,8 +32,11 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
         return tomllib.load(file)
 
 
-def _maybe_number(value: str) -> str | int | float:
+def _maybe_number(value: str | int | float) -> str | int | float:
     """try to convert string to number"""
+    if isinstance(value, int | float):
+        return value
+
     try:
         return int(value)        # "42" → 42 (int)
     except ValueError:

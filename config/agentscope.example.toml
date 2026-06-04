@@ -8,9 +8,10 @@ system_prompt = """
 max_iters = 8
 
 [model]
-model = "deepseek-v4-flash"
+model = "qwen3.5:4b-mlx"
 stream = true
 temperature = 0.2
 thinking_enable = false
 
-# DeepSeek 密钥放在项目根目录 .env 中，例如 DEEPSEEK_API_KEY=...
+# 默认连接本机 Ollama: http://localhost:11434
+# 如需连接其他地址，可设置环境变量 OLLAMA_HOST 或在这里添加 host = "http://localhost:11434"
