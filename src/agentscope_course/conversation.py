@@ -9,7 +9,7 @@ from agentscope.event import (
     RequireUserConfirmEvent,
     UserConfirmResultEvent,
 )
-from agentscope.message import Msg
+from agentscope.message import Msg, UserMsg
 
 from agentscope_course.console import StreamConsoleRenderer
 
@@ -96,6 +96,18 @@ async def reply_until_done(
                 reply_id=reply_id,
                 confirm_results=all_confirm_results,
             )
+        elif len(agent.state.tasks_context.tasks) !=0:
+            # 检查是否每一个task都完成
+            not_finish_tasks = []
+            for task in agent.state.tasks_context.tasks:
+                if task.state != "completed":
+                    not_finish_tasks.append(task.id)
+                    break
+            if len(not_finish_tasks) > 0:
+                next_input = UserMsg(name="user", content=f'not finished tasks:{','.join(not_finish_tasks)}. Continue your job.')
+            else:
+                renderer.close_turn()
+                next_input = None
         else:
             renderer.close_turn()
             next_input = None
