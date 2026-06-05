@@ -1,10 +1,10 @@
 """Agentscope Tools — Markdown parser, editor, formatter, and AgentScope wrappers.
 
-Tool source lives in ``org_tools/``; AgentScope ``FunctionTool`` wrappers
+Tool source lives in ``ori_tools/``; AgentScope ``FunctionTool`` wrappers
 live in ``agentscope_wrapper.py``.
 """
 
-from agentscope_tools.org_tools import (
+from agentscope_tools.ori_tools import (
     iter_outline,
     markdown_check_format,
     markdown_format_file,

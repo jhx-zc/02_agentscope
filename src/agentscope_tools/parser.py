@@ -1,6 +1,6 @@
-"""Backward-compatible re-export — source has moved to ``org_tools/parser.py``."""
+"""Backward-compatible re-export — source has moved to ``ori_tools/parser.py``."""
 
-from agentscope_tools.org_tools.parser import (  # noqa: F401
+from agentscope_tools.ori_tools.parser import (  # noqa: F401
     _containing_section,
     _markdown_parser,
     _read_markdown,

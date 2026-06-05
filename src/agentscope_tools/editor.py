@@ -1,6 +1,6 @@
-"""Backward-compatible re-export — source has moved to ``org_tools/editor.py``."""
+"""Backward-compatible re-export — source has moved to ``ori_tools/editor.py``."""
 
-from agentscope_tools.org_tools.editor import (  # noqa: F401
+from agentscope_tools.ori_tools.editor import (  # noqa: F401
     _content_lines,
     _read_lines,
     _write_lines,

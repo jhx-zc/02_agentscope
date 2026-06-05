@@ -1,6 +1,6 @@
 """AgentScope FunctionTool wrappers for the Markdown tools.
 
-Each tool from ``org_tools`` is wrapped via ``FunctionTool``, which
+Each tool from ``ori_tools`` is wrapped via ``FunctionTool``, which
 automatically extracts ``name``, ``description`` and ``input_schema`` from
 the function's type hints and docstring.
 
@@ -23,7 +23,7 @@ from typing import Any
 from agentscope.message import TextBlock, ToolResultState
 from agentscope.tool import FunctionTool, ToolChunk, Toolkit
 
-from agentscope_tools.org_tools import (
+from agentscope_tools.ori_tools import (
     WORKSPACE_ROOT,
     markdown_check_format,
     markdown_format_file,
