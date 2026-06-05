@@ -47,8 +47,7 @@ class StreamConsoleRenderer:
         elif isinstance(event, ToolResultDataDeltaEvent):
             self._render_tool_data(event)
         elif isinstance(event, ToolResultEndEvent):
-            self._flush_tool_output()
-            self._finish_open_line()
+            self.finish()
             state = getattr(event.state, "value", event.state)
             print(f"   result: {state}")
             self._needs_assistant_label = True

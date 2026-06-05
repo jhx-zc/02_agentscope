@@ -56,13 +56,15 @@ async def reply_until_done(
     next_input: Msg | UserConfirmResultEvent | None = user_msg
 
     while next_input is not None:
-        follow_up_event: UserConfirmResultEvent | None = None
+        follow_up_events: list[UserConfirmResultEvent] = []
         async for event in agent.reply_stream(next_input):
             renderer.render(event)
 
             if isinstance(event, RequireUserConfirmEvent):
                 renderer.finish()
-                follow_up_event = await _confirm_tool_calls(agent, event)
+                follow_up_events.append(
+                    await _confirm_tool_calls(agent, event),
+                )
 
             elif isinstance(event, RequireExternalExecutionEvent):
                 tool_names = ", ".join(
@@ -73,4 +75,13 @@ async def reply_until_done(
                     f"{tool_names}",
                 )
 
-        next_input = follow_up_event
+        if follow_up_events:
+            all_confirm_results: list[ConfirmResult] = []
+            for evt in follow_up_events:
+                all_confirm_results.extend(evt.confirm_results)
+            next_input = UserConfirmResultEvent(
+                reply_id=follow_up_events[0].reply_id,
+                confirm_results=all_confirm_results,
+            )
+        else:
+            next_input = None
