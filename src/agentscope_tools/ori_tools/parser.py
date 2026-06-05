@@ -201,7 +201,7 @@ TASK_RE = re.compile(r"^(?P<indent>\s*)(?P<marker>[-+*])\s+\[(?P<state>[ xX])\]\
 
 
 def markdown_list_tasks(path: str) -> list[dict[str, Any]]:
-    """List standard Markdown task list items.
+    """List standard task list items in the markdown file.
 
     Args:
         path: Path to the Markdown file.

@@ -136,7 +136,7 @@ def markdown_insert_after_heading(
 
 
 def markdown_update_task_status(path: str, task_index: int, done: bool) -> dict[str, Any]:
-    """Update only the checkbox state for a task list item.
+    """Update only the checkbox state for a task list item in markdown file.
 
     Args:
         path: Path to the Markdown file to modify.

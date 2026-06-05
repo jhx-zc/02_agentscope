@@ -117,6 +117,6 @@ def create_markdown_toolkit() -> Toolkit:
         "Use markdown_scan_directory without a path to scan this workspace. "
         "Use the returned file path values when calling the other Markdown tools."
     )
-    toolkit = Toolkit(tools=_READ_ONLY_TOOLS + _MUTABLE_TOOLS + _TASK_TOOLS)
+    toolkit = Toolkit(tools=_TASK_TOOLS + _READ_ONLY_TOOLS + _MUTABLE_TOOLS)
     toolkit.tool_groups[0].instructions = instructions
     return toolkit
