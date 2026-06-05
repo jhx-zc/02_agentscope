@@ -12,6 +12,7 @@ wheels/
 # Local secrets and machine-specific AgentScope config
 .env
 config/agentscope.toml
+agentscope_events.jsonl
 
 # Build artifacts
 src/*.egg-info/
