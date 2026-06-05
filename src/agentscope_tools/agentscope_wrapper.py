@@ -50,6 +50,7 @@ from agentscope_tools.ori_tools import (
     user_memory_list_preferences,
     user_memory_outline,
     user_memory_save_preference,
+    hard_user_memories,
 )
 
 
@@ -79,6 +80,12 @@ def _function_tool(func: Callable[..., Any], *, is_read_only: bool) -> FunctionT
     """Create an AgentScope FunctionTool for a regular Python function."""
     return FunctionTool(_wrap_tool_result(func), is_read_only=is_read_only)
 
+
+def init_user_memory():
+    memory_outline = user_memory_outline()
+    hard_memories = hard_user_memories()
+    return [TextBlock(text='User Memory outline:'), TextBlock(text=_format_tool_result(memory_outline)),
+             TextBlock(text='User Hard Memories:'), TextBlock(text=_format_tool_result(hard_memories))]
 
 # ── Read-only (parser) tools ────────────────────────────────────────────
 

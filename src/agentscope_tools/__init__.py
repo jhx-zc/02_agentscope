@@ -22,9 +22,11 @@ from agentscope_tools.ori_tools import (
     user_memory_outline,
     user_memory_save_preference,
 )
-from agentscope_tools.agentscope_wrapper import create_markdown_toolkit
+from agentscope_tools.agentscope_wrapper import create_markdown_toolkit, init_user_memory
 
 __all__ = [
+    # memory
+    "init_user_memory",
     # Parser
     "iter_outline",
     "markdown_get_section",

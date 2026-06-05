@@ -23,6 +23,7 @@ from agentscope_tools.ori_tools.memory import (
     user_memory_list_preferences,
     user_memory_outline,
     user_memory_save_preference,
+    hard_user_memories,
 )
 
 __all__ = [

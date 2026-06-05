@@ -96,6 +96,15 @@ def _memory_outline_entry(memory: dict[str, Any], include_preview: bool) -> dict
     return entry
 
 
+def hard_user_memories() -> dict[str, Any]:
+    store = _load_store()
+    hard_memories = []
+    for memory in store["preferences"].values():
+        if memory.get('hard', False):
+            hard_memories.append(memory)
+    hard_memories
+
+
 def user_memory_outline(
     category: str | None = None,
     include_preview: bool = False,
@@ -152,13 +161,12 @@ def user_memory_outline(
     ]
 
     return {
-        "path": str(USER_PREFERENCES_PATH),
         "kind": store.get("kind"),
         "updated_at": store.get("updated_at"),
         "category": normalized_category,
         "total_count": sum(item["count"] for item in sorted_categories),
         "categories": sorted_categories,
-        "next_step": "Call user_memory_get_preference with a specific key to load a full memory value.",
+        "tip": "Call user_memory_get_preference with a specific key to load a full memory value.",
     }
 
 
@@ -167,6 +175,8 @@ def user_memory_save_preference(
     value: str,
     category: str = "general",
     source: str = "user",
+    hard: bool = False,
+    detail: str = ""
 ) -> dict[str, Any]:
     """Save or update one explicitly requested user preference memory.
 
@@ -174,7 +184,8 @@ def user_memory_save_preference(
     save, record, or use a preference in the future. Do not infer preferences
     silently from ordinary conversation. Examples of valid triggers include:
     "remember that I prefer Chinese replies", "save this as my coding style",
-    "以后默认用中文回答", and "记住我的项目偏好".
+    "以后默认用中文回答", and "记住我的项目偏好". If the user said that you must 
+    remenber this, its means that this preference is a hard preference.
 
     Args:
         key: Stable preference key, for example ``language`` or
@@ -183,6 +194,8 @@ def user_memory_save_preference(
         category: Preference category used for filtering. Defaults to
             ``general``.
         source: Where this memory came from. Defaults to ``user``.
+        hard: Dose preference is a hard rule.
+        detail: Detail Informations of this memory.
 
     Returns:
         A dictionary containing the saved memory record, whether it replaced an
@@ -204,13 +217,14 @@ def user_memory_save_preference(
         "source": normalized_source,
         "created_at": preferences.get(normalized_key, {}).get("created_at", timestamp),
         "updated_at": timestamp,
+        "hard": hard,
+        "detail": detail
     }
     preferences[normalized_key] = record
     store["updated_at"] = timestamp
     _save_store(store)
 
     return {
-        "path": str(USER_PREFERENCES_PATH),
         "saved": True,
         "replaced": existed,
         "memory": record,
@@ -231,7 +245,6 @@ def user_memory_get_preference(key: str) -> dict[str, Any]:
     memory = store["preferences"].get(normalized_key)
 
     return {
-        "path": str(USER_PREFERENCES_PATH),
         "key": normalized_key,
         "found": memory is not None,
         "memory": memory,
@@ -265,7 +278,6 @@ def user_memory_list_preferences(category: str | None = None) -> dict[str, Any]:
     memories.sort(key=lambda memory: memory.get("key", ""))
 
     return {
-        "path": str(USER_PREFERENCES_PATH),
         "category": normalized_category,
         "count": len(memories),
         "memories": memories,
@@ -292,7 +304,6 @@ def user_memory_delete_preference(key: str) -> dict[str, Any]:
         _save_store(store)
 
     return {
-        "path": str(USER_PREFERENCES_PATH),
         "key": normalized_key,
         "deleted": deleted is not None,
         "memory": deleted,
@@ -322,7 +333,6 @@ def user_memory_clear_preferences(confirm: bool = False) -> dict[str, Any]:
     _save_store(store)
 
     return {
-        "path": str(USER_PREFERENCES_PATH),
         "cleared": True,
         "removed_count": removed_count,
     }

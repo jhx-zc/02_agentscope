@@ -17,6 +17,8 @@ from agentscope_course.config import _maybe_number, load_config, load_dotenv
 from agentscope_course.conversation import reply_until_done
 from agentscope_course.models import PatchedOllamaChatModel
 
+from agentscope_tools import init_user_memory
+
 
 def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
     """Create the AgentScope Ollama chat model."""
@@ -66,8 +68,7 @@ def create_agent(config: dict[str, Any] | None = None) -> Agent:
     """Create the starter AgentScope agent."""
     loaded = config or load_config()
     agent_config = loaded.get("agent", {})
-
-    return Agent(
+    agent = Agent(
         name=agent_config.get("name", "course_assistant"),
         system_prompt=agent_config.get(
             "system_prompt",
@@ -77,6 +78,8 @@ def create_agent(config: dict[str, Any] | None = None) -> Agent:
         toolkit=create_toolkit(),
         react_config=ReActConfig(max_iters=agent_config.get("max_iters", 8)),
     )
+    agent.state.context.append(UserMsg(name="user", content=init_user_memory()))
+    return agent
 
 
 async def ask_agent(config_path: str | Path | None = None) -> None:
@@ -85,7 +88,6 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
     Type 'quit' or press Ctrl-C to exit.
     """
     agent = create_agent(load_config(config_path))
-
     print("=" * 50)
     print("🤖 Agent已就绪 (输入 'quit' 退出)")
     print("=" * 50)

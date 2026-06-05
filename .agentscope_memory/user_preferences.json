@@ -1,6 +1,27 @@
 {
   "kind": "user_preferences",
-  "preferences": {},
-  "updated_at": null,
+  "preferences": {
+    "language": {
+      "category": "general",
+      "created_at": "2026-06-05T12:32:48+00:00",
+      "key": "reply-language",
+      "source": "user",
+      "updated_at": "2026-06-05T12:32:48+00:00",
+      "value": "English",
+      "detail": "You should reply user in English.",
+      "hard": true
+    },
+    "opened_file": {
+      "category": "general",
+      "created_at": "2026-06-05T11:56:26+00:00",
+      "key": "opened_file",
+      "source": "user",
+      "updated_at": "2026-06-05T11:56:26+00:00",
+      "value": "Test.md",
+      "detail": "",
+      "hard": false
+    }
+  },
+  "updated_at": "2026-06-05T12:32:48+00:00",
   "version": 1
 }
