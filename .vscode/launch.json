@@ -8,7 +8,7 @@
       "program": "${workspaceFolder}/src/cli.py",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
-      "justMyCode": true
+      "justMyCode": false
     },
     {
       "name": "Python: Current File",
