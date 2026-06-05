@@ -9,12 +9,13 @@ from typing import Any
 from agentscope.agent import Agent, ReActConfig
 from agentscope.credential import OllamaCredential
 from agentscope.message import UserMsg
-from agentscope.model import ChatModelBase, OllamaChatModel
+from agentscope.model import ChatModelBase
 from agentscope.tool import Toolkit
 
 from agentscope_course.console import StreamConsoleRenderer
 from agentscope_course.config import _maybe_number, load_config, load_dotenv
 from agentscope_course.conversation import reply_until_done
+from agentscope_course.models import PatchedOllamaChatModel
 
 
 def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
@@ -38,7 +39,7 @@ def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
     )
     thinking_enable = bool(model_config.get("thinking_enable", False))
 
-    parameters = OllamaChatModel.Parameters(
+    parameters = PatchedOllamaChatModel.Parameters(
         temperature=temperature,
         max_tokens=max_tokens,
         thinking_enable=thinking_enable,
@@ -46,7 +47,7 @@ def create_model(config: dict[str, Any] | None = None) -> ChatModelBase:
 
     host = os.getenv("OLLAMA_HOST") or model_config.get("host")
     credential = OllamaCredential(host=host) if host else OllamaCredential()
-    return OllamaChatModel(
+    return PatchedOllamaChatModel(
         credential=credential,
         model=model_name,
         parameters=parameters,
