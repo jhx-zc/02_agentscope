@@ -102,7 +102,7 @@ def hard_user_memories() -> dict[str, Any]:
     for memory in store["preferences"].values():
         if memory.get('hard', False):
             hard_memories.append(memory)
-    hard_memories
+    return hard_memories
 
 
 def user_memory_outline(
@@ -176,7 +176,6 @@ def user_memory_save_preference(
     category: str = "general",
     source: str = "user",
     hard: bool = False,
-    detail: str = ""
 ) -> dict[str, Any]:
     """Save or update one explicitly requested user preference memory.
 
@@ -195,7 +194,6 @@ def user_memory_save_preference(
             ``general``.
         source: Where this memory came from. Defaults to ``user``.
         hard: Dose preference is a hard rule.
-        detail: Detail Informations of this memory.
 
     Returns:
         A dictionary containing the saved memory record, whether it replaced an
@@ -218,7 +216,6 @@ def user_memory_save_preference(
         "created_at": preferences.get(normalized_key, {}).get("created_at", timestamp),
         "updated_at": timestamp,
         "hard": hard,
-        "detail": detail
     }
     preferences[normalized_key] = record
     store["updated_at"] = timestamp
