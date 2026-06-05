@@ -1,8 +1,10 @@
-"""AgentScope FunctionTool wrappers for the Markdown tools.
+"""AgentScope FunctionTool wrappers for Markdown tools and built-in Task tools.
 
-Each tool from ``ori_tools`` is wrapped via ``FunctionTool``, which
+Each Markdown tool from ``ori_tools`` is wrapped via ``FunctionTool``, which
 automatically extracts ``name``, ``description`` and ``input_schema`` from
-the function's type hints and docstring.
+the function's type hints and docstring. Built-in task planning tools
+(``TaskCreate``, ``TaskGet``, ``TaskList``, ``TaskUpdate``) are included
+directly as ``ToolBase`` instances.
 
 Usage::
 
@@ -21,7 +23,15 @@ from functools import wraps
 from typing import Any
 
 from agentscope.message import TextBlock, ToolResultState
-from agentscope.tool import FunctionTool, ToolChunk, Toolkit
+from agentscope.tool import (
+    FunctionTool,
+    TaskCreate,
+    TaskGet,
+    TaskList,
+    TaskUpdate,
+    ToolChunk,
+    Toolkit,
+)
 
 from agentscope_tools.ori_tools import (
     WORKSPACE_ROOT,
@@ -83,20 +93,30 @@ _MUTABLE_TOOLS = [
     _function_tool(markdown_format_file, is_read_only=False),
 ]
 
+# ── Built-in task planning tools ────────────────────────────────────────
+
+_TASK_TOOLS = [
+    TaskCreate(),
+    TaskGet(),
+    TaskList(),
+    TaskUpdate(),
+]
+
 
 def create_markdown_toolkit() -> Toolkit:
-    """Create an AgentScope ``Toolkit`` with all Markdown tools registered.
+    """Create an AgentScope ``Toolkit`` with all Markdown and Task tools.
 
     Returns:
-        A ``Toolkit`` instance containing 9 tools in the ``"basic"`` tool
-        group: 5 read-only (scanner / parser / checker) and 4 mutable
-        (editor / formatter).
+        A ``Toolkit`` instance containing 13 tools in the ``"basic"`` tool
+        group: 5 read-only (scanner / parser / checker), 4 mutable
+        (editor / formatter), and 4 built-in task planning tools
+        (TaskCreate, TaskGet, TaskList, TaskUpdate).
     """
     instructions = (
         f"The current workspace is {WORKSPACE_ROOT}. "
         "Use markdown_scan_directory without a path to scan this workspace. "
         "Use the returned file path values when calling the other Markdown tools."
     )
-    toolkit = Toolkit(tools=_READ_ONLY_TOOLS + _MUTABLE_TOOLS)
+    toolkit = Toolkit(tools=_READ_ONLY_TOOLS + _MUTABLE_TOOLS + _TASK_TOOLS)
     toolkit.tool_groups[0].instructions = instructions
     return toolkit
