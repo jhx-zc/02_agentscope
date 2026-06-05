@@ -16,6 +16,14 @@ from agentscope_tools.ori_tools.formatter import (
     markdown_check_format,
     markdown_format_file,
 )
+from agentscope_tools.ori_tools.memory import (
+    user_memory_clear_preferences,
+    user_memory_delete_preference,
+    user_memory_get_preference,
+    user_memory_list_preferences,
+    user_memory_outline,
+    user_memory_save_preference,
+)
 
 __all__ = [
     # Parser
@@ -32,4 +40,11 @@ __all__ = [
     # Formatter
     "markdown_check_format",
     "markdown_format_file",
+    # Memory
+    "user_memory_clear_preferences",
+    "user_memory_delete_preference",
+    "user_memory_get_preference",
+    "user_memory_list_preferences",
+    "user_memory_outline",
+    "user_memory_save_preference",
 ]

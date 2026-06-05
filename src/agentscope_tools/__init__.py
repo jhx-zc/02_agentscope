@@ -15,6 +15,12 @@ from agentscope_tools.ori_tools import (
     markdown_replace_section,
     markdown_scan_directory,
     markdown_update_task_status,
+    user_memory_clear_preferences,
+    user_memory_delete_preference,
+    user_memory_get_preference,
+    user_memory_list_preferences,
+    user_memory_outline,
+    user_memory_save_preference,
 )
 from agentscope_tools.agentscope_wrapper import create_markdown_toolkit
 
@@ -32,6 +38,13 @@ __all__ = [
     # Formatter
     "markdown_check_format",
     "markdown_format_file",
+    # Memory
+    "user_memory_clear_preferences",
+    "user_memory_delete_preference",
+    "user_memory_get_preference",
+    "user_memory_list_preferences",
+    "user_memory_outline",
+    "user_memory_save_preference",
     # AgentScope wrapper
     "create_markdown_toolkit",
 ]

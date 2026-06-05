@@ -1,6 +1,6 @@
-"""AgentScope FunctionTool wrappers for Markdown tools and built-in Task tools.
+"""AgentScope FunctionTool wrappers for course tools and built-in Task tools.
 
-Each Markdown tool from ``ori_tools`` is wrapped via ``FunctionTool``, which
+Each regular Python tool from ``ori_tools`` is wrapped via ``FunctionTool``, which
 automatically extracts ``name``, ``description`` and ``input_schema`` from
 the function's type hints and docstring. Built-in task planning tools
 (``TaskCreate``, ``TaskGet``, ``TaskList``, ``TaskUpdate``) are included
@@ -44,6 +44,12 @@ from agentscope_tools.ori_tools import (
     markdown_replace_section,
     markdown_scan_directory,
     markdown_update_task_status,
+    user_memory_clear_preferences,
+    user_memory_delete_preference,
+    user_memory_get_preference,
+    user_memory_list_preferences,
+    user_memory_outline,
+    user_memory_save_preference,
 )
 
 
@@ -93,6 +99,17 @@ _MUTABLE_TOOLS = [
     _function_tool(markdown_format_file, is_read_only=False),
 ]
 
+# ── Mutable JSON user preference memory tools ───────────────────────────
+
+_MEMORY_TOOLS = [
+    _function_tool(user_memory_outline, is_read_only=True),
+    _function_tool(user_memory_save_preference, is_read_only=False),
+    _function_tool(user_memory_get_preference, is_read_only=True),
+    _function_tool(user_memory_list_preferences, is_read_only=True),
+    _function_tool(user_memory_delete_preference, is_read_only=False),
+    _function_tool(user_memory_clear_preferences, is_read_only=False),
+]
+
 # ── Built-in task planning tools ────────────────────────────────────────
 
 _TASK_TOOLS = [
@@ -104,19 +121,25 @@ _TASK_TOOLS = [
 
 
 def create_markdown_toolkit() -> Toolkit:
-    """Create an AgentScope ``Toolkit`` with all Markdown and Task tools.
+    """Create an AgentScope ``Toolkit`` with Markdown, Memory, and Task tools.
 
     Returns:
-        A ``Toolkit`` instance containing 13 tools in the ``"basic"`` tool
-        group: 5 read-only (scanner / parser / checker), 4 mutable
-        (editor / formatter), and 4 built-in task planning tools
+        A ``Toolkit`` instance containing Markdown tools, JSON-backed user
+        preference memory tools, and 4 built-in task planning tools
         (TaskCreate, TaskGet, TaskList, TaskUpdate).
     """
     instructions = (
         f"The current workspace is {WORKSPACE_ROOT}. "
         "Use markdown_scan_directory without a path to scan this workspace. "
-        "Use the returned file path values when calling the other Markdown tools."
+        "Use the returned file path values when calling the other Markdown tools. "
+        "Use user_memory_outline before loading memory values, then call "
+        "user_memory_get_preference for the specific keys needed. Use "
+        "user_memory_save_preference only when the user explicitly asks to "
+        "remember, save, record, or apply a preference in the future. Do not "
+        "silently infer and save preferences from ordinary conversation."
     )
-    toolkit = Toolkit(tools=_TASK_TOOLS + _READ_ONLY_TOOLS + _MUTABLE_TOOLS)
+    toolkit = Toolkit(
+        tools=_TASK_TOOLS + _READ_ONLY_TOOLS + _MUTABLE_TOOLS + _MEMORY_TOOLS
+    )
     toolkit.tool_groups[0].instructions = instructions
     return toolkit
