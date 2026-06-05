@@ -349,6 +349,8 @@ class StreamConsoleRenderer:
         self._line_open = False
 
     def _log_agent_event(self, event: Any) -> None:
+        if 'DELTA' in str(event.__class__.__name__).upper():
+            return
         fields = self._event_fields(event)
         record = {
             "source": "agentscope",
