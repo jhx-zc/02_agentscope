@@ -35,6 +35,7 @@ from agentscope.tool import (
 
 from agentscope_tools.ori_tools import (
     WORKSPACE_ROOT,
+    SKILLS_ROOTS,
     markdown_check_format,
     markdown_format_file,
     markdown_get_section,
@@ -137,16 +138,10 @@ def create_markdown_toolkit() -> Toolkit:
     """
     instructions = (
         f"The current workspace is {WORKSPACE_ROOT}. "
-        "Use markdown_scan_directory without a path to scan this workspace. "
-        "Use the returned file path values when calling the other Markdown tools. "
-        "Use user_memory_outline before loading memory values, then call "
-        "user_memory_get_preference for the specific keys needed. Use "
-        "user_memory_save_preference only when the user explicitly asks to "
-        "remember, save, record, or apply a preference in the future. Do not "
-        "silently infer and save preferences from ordinary conversation."
     )
     toolkit = Toolkit(
-        tools=_TASK_TOOLS + _READ_ONLY_TOOLS + _MUTABLE_TOOLS + _MEMORY_TOOLS
+        tools=_TASK_TOOLS + _READ_ONLY_TOOLS + _MUTABLE_TOOLS + _MEMORY_TOOLS,
+        skills_or_loaders=SKILLS_ROOTS
     )
     toolkit.tool_groups[0].instructions = instructions
     return toolkit

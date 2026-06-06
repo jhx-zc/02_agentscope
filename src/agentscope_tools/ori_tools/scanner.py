@@ -7,6 +7,13 @@ from typing import Any
 
 MARKDOWN_SUFFIXES = {".md", ".markdown"}
 WORKSPACE_ROOT = Path.cwd().resolve()
+SKILLS_ROOTS = [f'{(WORKSPACE_ROOT / ".skills" / "markdown-workspace").resolve()}',
+                 f'{(WORKSPACE_ROOT / ".skills" / "plan-mode-task-management").resolve()}',
+                   f'{(WORKSPACE_ROOT / ".skills" / "user-memory-preferences").resolve()}']
+
+for SKILLS_ROOT in SKILLS_ROOTS:
+    if not Path(SKILLS_ROOT).is_dir():
+        raise NotADirectoryError(f"Expected skills directory at: {SKILLS_ROOT}")
 
 
 def _is_hidden_path(path: Path) -> bool:

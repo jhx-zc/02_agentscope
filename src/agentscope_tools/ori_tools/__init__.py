@@ -6,7 +6,7 @@ from agentscope_tools.ori_tools.parser import (
     markdown_list_tasks,
     markdown_outline,
 )
-from agentscope_tools.ori_tools.scanner import WORKSPACE_ROOT, markdown_scan_directory
+from agentscope_tools.ori_tools.scanner import WORKSPACE_ROOT, SKILLS_ROOTS, markdown_scan_directory
 from agentscope_tools.ori_tools.editor import (
     markdown_insert_after_heading,
     markdown_replace_section,
@@ -29,6 +29,7 @@ from agentscope_tools.ori_tools.memory import (
 __all__ = [
     # Parser
     "WORKSPACE_ROOT",
+    "SKILLS_ROOTS",
     "iter_outline",
     "markdown_get_section",
     "markdown_list_tasks",
@@ -48,4 +49,5 @@ __all__ = [
     "user_memory_list_preferences",
     "user_memory_outline",
     "user_memory_save_preference",
+    "hard_user_memories"
 ]
