@@ -94,7 +94,7 @@ _READ_ONLY_TOOLS = [
     _function_tool(markdown_scan_directory, is_read_only=True),
     _function_tool(markdown_outline, is_read_only=True),
     _function_tool(markdown_get_section, is_read_only=True),
-    _function_tool(markdown_list_tasks, is_read_only=True),
+    # _function_tool(markdown_list_tasks, is_read_only=True),
     _function_tool(markdown_check_format, is_read_only=True),
 ]
 
@@ -103,7 +103,7 @@ _READ_ONLY_TOOLS = [
 _MUTABLE_TOOLS = [
     _function_tool(markdown_replace_section, is_read_only=False),
     _function_tool(markdown_insert_after_heading, is_read_only=False),
-    _function_tool(markdown_update_task_status, is_read_only=False),
+    # _function_tool(markdown_update_task_status, is_read_only=False),
     _function_tool(markdown_format_file, is_read_only=False),
 ]
 
