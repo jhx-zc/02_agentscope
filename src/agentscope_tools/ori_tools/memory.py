@@ -96,7 +96,7 @@ def _memory_outline_entry(memory: dict[str, Any], include_preview: bool) -> dict
     return entry
 
 
-def hard_user_memories() -> dict[str, Any]:
+def hard_user_memories() -> list[dict[str, Any]]:
     store = _load_store()
     hard_memories = []
     for memory in store["preferences"].values():
