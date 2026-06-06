@@ -127,14 +127,11 @@ _TASK_TOOLS = [
     TaskUpdate(),
 ]
 
+# _TASK_TOOLS = []
+
 
 def create_markdown_toolkit() -> Toolkit:
-    """Create an AgentScope ``Toolkit`` with Markdown, Memory, and Task tools.
-
-    Returns:
-        A ``Toolkit`` instance containing Markdown tools, JSON-backed user
-        preference memory tools, and 4 built-in task planning tools
-        (TaskCreate, TaskGet, TaskList, TaskUpdate).
+    """Create an AgentScope ``Toolkit``
     """
     instructions = (
         f"The current workspace is {WORKSPACE_ROOT}. "
