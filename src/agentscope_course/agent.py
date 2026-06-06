@@ -76,7 +76,7 @@ def create_agent(config: dict[str, Any] | None = None) -> Agent:
         ),
         model=create_model(loaded.get("model", {})),
         toolkit=create_toolkit(),
-        react_config=ReActConfig(max_iters=agent_config.get("max_iters", 8)),
+        react_config=ReActConfig(max_iters=agent_config.get("max_iters", 20)),
     )
     agent.state.context.append(UserMsg(name="user", content=init_user_memory()))
     return agent
