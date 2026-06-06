@@ -494,7 +494,7 @@ class StreamConsoleRenderer:
         if (
             self._active_batch is None
             or self._active_batch.reply_id != reply_id
-            or self._active_batch.done
+            # or self._active_batch.done
         ):
             self._stop_live()
             self._batch_number += 1
