@@ -98,6 +98,7 @@ class _ToolBatchState:
 
     @property
     def done(self) -> bool:
+        # 应该是当 reply id 改变就认定 batch tool done
         return bool(self.tools) and all(
             self.tools[tool_id].done for tool_id in self.order
         )
@@ -292,7 +293,7 @@ class StreamConsoleRenderer:
                 tool.args_parts.append(tool_call.input)
             tool.requires_confirmation = True
             tool.status = "waiting approval"
-            self._refresh_live()
+        self._refresh_live()
 
     def _render_tool_result_start(self, event: ToolResultStartEvent) -> None:
         tool = self._ensure_tool(
@@ -339,8 +340,8 @@ class StreamConsoleRenderer:
         tool.status = "finished"
         tool.result = str(state)
         self._refresh_live()
-        # if self._active_batch and self._active_batch.done:
-        #     self._stop_live()
+        if self._active_batch and self._active_batch.done:
+            self._stop_live()
         self._needs_assistant_label = True
 
     def _finish_open_line(self) -> None:
@@ -494,7 +495,7 @@ class StreamConsoleRenderer:
         if (
             self._active_batch is None
             or self._active_batch.reply_id != reply_id
-            # or self._active_batch.done
+            or self._active_batch.done
         ):
             self._stop_live()
             self._batch_number += 1
@@ -523,7 +524,6 @@ class StreamConsoleRenderer:
             console=self._console,
             refresh_per_second=8,
             transient=False,
-            vertical_overflow="visible",
         )
         self._live.start(refresh=True)
 
