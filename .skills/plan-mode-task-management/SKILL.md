@@ -17,6 +17,28 @@ TaskList
 
 Plan mode does **not** mean creating or editing Markdown task lists such as `- [ ]` or `- [x]`.
 
+Tool activation uses `reset_tools`, whose arguments are the final active tool
+state, not incremental changes. Before calling `reset_tools`, first read every
+skill that is relevant to the current user turn.
+
+If task management tools are not currently available, activate them together
+with every other tool group that must remain available:
+
+```text
+reset_tools(task_management=true)
+```
+
+If the task also requires Markdown or memory tools, include those groups in the
+same call, for example:
+
+```text
+reset_tools(task_management=true, markdown_read=true, memory=true)
+```
+
+If you call `reset_tools` again later, keep every still-needed group set to true.
+
+Do not call `Skill` again for `plan-mode-task-management` after this skill has already been read in the current user turn.
+
 ## Core principle
 
 When this skill is active, the agent must follow this sequence:

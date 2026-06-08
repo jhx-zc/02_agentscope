@@ -34,6 +34,28 @@ Do not call memory tools when:
 
 Always inspect the memory outline before loading specific memory values.
 
+Tool activation uses `reset_tools`, whose arguments are the final active tool
+state, not incremental changes. Before calling `reset_tools`, first read every
+skill that is relevant to the current user turn.
+
+If memory tools are not currently available, activate them together with every
+other tool group that must remain available:
+
+```text
+reset_tools(memory=true)
+```
+
+If the task also requires Markdown or task management tools, include those
+groups in the same call, for example:
+
+```text
+reset_tools(memory=true, markdown_read=true, task_management=true)
+```
+
+If you call `reset_tools` again later, keep every still-needed group set to true.
+
+Do not call `Skill` again for `user-memory-preferences` after this skill has already been read in the current user turn.
+
 Call:
 
 ```text

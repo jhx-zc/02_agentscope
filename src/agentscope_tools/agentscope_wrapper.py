@@ -30,6 +30,7 @@ from agentscope.tool import (
     TaskList,
     TaskUpdate,
     ToolChunk,
+    ToolGroup,
     Toolkit,
 )
 
@@ -133,12 +134,78 @@ _TASK_TOOLS = [
 def create_markdown_toolkit() -> Toolkit:
     """Create an AgentScope ``Toolkit``
     """
-    instructions = (
-        f"The current workspace is {WORKSPACE_ROOT}. "
+    workspace_hint = f"The current workspace is {WORKSPACE_ROOT}. "
+    return Toolkit(
+        tools=[],
+        skills_or_loaders=SKILLS_ROOTS,
+        tool_groups=[
+            ToolGroup(
+                name="markdown_read",
+                description=(
+                    "Use when the task requires scanning, reading, "
+                    "outlining, or checking Markdown files. Activate this "
+                    "after reading the markdown-workspace skill."
+                ),
+                instructions=(
+                    workspace_hint
+                    + "Before using these tools, you must have read the "
+                    "`markdown-workspace` skill with the `Skill` tool. "
+                    "`reset_tools` uses final-state semantics, so every "
+                    "reset call must keep all still-needed groups set to "
+                    "true. Start with `markdown_scan_directory`."
+                ),
+                tools=_READ_ONLY_TOOLS,
+            ),
+            ToolGroup(
+                name="markdown_write",
+                description=(
+                    "Use when the task requires editing or formatting "
+                    "Markdown files. Activate this after reading the "
+                    "markdown-workspace skill."
+                ),
+                instructions=(
+                    workspace_hint
+                    + "Before using these tools, you must have read the "
+                    "`markdown-workspace` skill with the `Skill` tool. "
+                    "`reset_tools` uses final-state semantics, so every "
+                    "reset call must keep all still-needed groups set to "
+                    "true. "
+                    "Use exact file paths returned by "
+                    "`markdown_scan_directory`."
+                ),
+                tools=_MUTABLE_TOOLS,
+            ),
+            ToolGroup(
+                name="memory",
+                description=(
+                    "Use when the task requires reading, saving, updating, "
+                    "or applying user preferences. Activate this after "
+                    "reading the user-memory-preferences skill."
+                ),
+                instructions=(
+                    "Before using these tools, you must have read the "
+                    "`user-memory-preferences` skill with the `Skill` tool. "
+                    "`reset_tools` uses final-state semantics, so every "
+                    "reset call must keep all still-needed groups set to "
+                    "true. "
+                    "Always inspect outline before loading specific values."
+                ),
+                tools=_MEMORY_TOOLS,
+            ),
+            ToolGroup(
+                name="task_management",
+                description=(
+                    "Use when the task requires internal task planning, task "
+                    "tracking, or structured execution. Activate this after "
+                    "reading the plan-mode-task-management skill."
+                ),
+                instructions=(
+                    "Before using these tools, you must have read the "
+                    "`plan-mode-task-management` skill with the `Skill` tool. "
+                    "`reset_tools` uses final-state semantics, so every "
+                    "reset call must keep all still-needed groups set to true."
+                ),
+                tools=_TASK_TOOLS,
+            ),
+        ],
     )
-    toolkit = Toolkit(
-        tools=_TASK_TOOLS + _READ_ONLY_TOOLS + _MUTABLE_TOOLS + _MEMORY_TOOLS,
-        skills_or_loaders=SKILLS_ROOTS
-    )
-    toolkit.tool_groups[0].instructions = instructions
-    return toolkit
