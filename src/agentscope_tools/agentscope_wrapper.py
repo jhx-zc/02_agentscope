@@ -131,10 +131,14 @@ _TASK_TOOLS = [
 # _TASK_TOOLS = []
 
 
+def _workspace_instruction(text: str) -> str:
+    """Prefix tool-group instructions with the workspace path."""
+    return f"The current workspace is {WORKSPACE_ROOT}. {text}"
+
+
 def create_markdown_toolkit() -> Toolkit:
     """Create an AgentScope ``Toolkit``
     """
-    workspace_hint = f"The current workspace is {WORKSPACE_ROOT}. "
     return Toolkit(
         tools=[],
         skills_or_loaders=SKILLS_ROOTS,
@@ -142,68 +146,41 @@ def create_markdown_toolkit() -> Toolkit:
             ToolGroup(
                 name="markdown_read",
                 description=(
-                    "Use when the task requires scanning, reading, "
-                    "outlining, or checking Markdown files. Activate this "
-                    "after reading the markdown-workspace skill."
+                    "用于扫描、读取、提纲分析或检查 Markdown 文件。"
                 ),
-                instructions=(
-                    workspace_hint
-                    + "Before using these tools, you must have read the "
-                    "`markdown-workspace` skill with the `Skill` tool. "
-                    "`reset_tools` uses final-state semantics, so every "
-                    "reset call must keep all still-needed groups set to "
-                    "true. Start with `markdown_scan_directory`."
+                instructions=_workspace_instruction(
+                    "先调用 `markdown_scan_directory`，后续使用扫描结果中的完整 path。"
                 ),
                 tools=_READ_ONLY_TOOLS,
             ),
             ToolGroup(
                 name="markdown_write",
                 description=(
-                    "Use when the task requires editing or formatting "
-                    "Markdown files. Activate this after reading the "
-                    "markdown-workspace skill."
+                    "用于替换、插入或格式化 Markdown 文件。"
                 ),
-                instructions=(
-                    workspace_hint
-                    + "Before using these tools, you must have read the "
-                    "`markdown-workspace` skill with the `Skill` tool. "
-                    "`reset_tools` uses final-state semantics, so every "
-                    "reset call must keep all still-needed groups set to "
-                    "true. "
-                    "Use exact file paths returned by "
-                    "`markdown_scan_directory`."
+                instructions=_workspace_instruction(
+                    "写入前先通过 `markdown_scan_directory` 获取完整 path；"
+                    "需要定位 section 时先用只读工具确认范围。"
                 ),
                 tools=_MUTABLE_TOOLS,
             ),
             ToolGroup(
                 name="memory",
                 description=(
-                    "Use when the task requires reading, saving, updating, "
-                    "or applying user preferences. Activate this after "
-                    "reading the user-memory-preferences skill."
+                    "用于读取、保存、更新、删除或应用用户偏好。"
                 ),
                 instructions=(
-                    "Before using these tools, you must have read the "
-                    "`user-memory-preferences` skill with the `Skill` tool. "
-                    "`reset_tools` uses final-state semantics, so every "
-                    "reset call must keep all still-needed groups set to "
-                    "true. "
-                    "Always inspect outline before loading specific values."
+                    "先调用 `user_memory_outline` 查看 key；只读取或修改当前任务相关的偏好。"
                 ),
                 tools=_MEMORY_TOOLS,
             ),
             ToolGroup(
                 name="task_management",
                 description=(
-                    "Use when the task requires internal task planning, task "
-                    "tracking, or structured execution. Activate this after "
-                    "reading the plan-mode-task-management skill."
+                    "用于内部任务规划、任务状态跟踪和结构化执行。"
                 ),
                 instructions=(
-                    "Before using these tools, you must have read the "
-                    "`plan-mode-task-management` skill with the `Skill` tool. "
-                    "`reset_tools` uses final-state semantics, so every "
-                    "reset call must keep all still-needed groups set to true."
+                    "充分调查后再创建完整任务列表；开始任务标记 in_progress，完成后标记 completed。"
                 ),
                 tools=_TASK_TOOLS,
             ),

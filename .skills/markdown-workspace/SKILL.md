@@ -1,64 +1,38 @@
 ---
 name: markdown-workspace
-description: Use this skill when the task involves finding, reading, editing, or operating on Markdown files in the current workspace.
+description: 当任务涉及查找、读取、编辑、整理当前工作区中的 Markdown 文件时使用。
 ---
 
 # Markdown Workspace Skill
 
-This skill defines how to work with Markdown files in the current workspace.
+这个 skill 规定如何处理当前工作区中的 Markdown 文件。
 
-## Core rule
+## 工具组
 
-Before using any Markdown file-specific tool, first discover the available Markdown files.
+- 只读扫描、读取、提纲、格式检查：`markdown_read`
+- 编辑或格式化 Markdown：`markdown_read` + `markdown_write`
 
-Tool activation uses `reset_tools`, whose arguments are the final active tool
-state, not incremental changes. Before calling `reset_tools`, first read every
-skill that is relevant to the current user turn.
+如果所需工具尚不可用，按 system prompt 中的 `reset_tools` 最终状态协议激活工具组，并保留当前任务仍需使用的其他工具组。
 
-If Markdown tools are not currently available, activate Markdown tools together
-with every other tool group that must remain available.
+## 核心规则
 
-For Markdown reading only:
-
-```text
-reset_tools(markdown_read=true)
-```
-
-For Markdown editing or formatting:
-
-```text
-reset_tools(markdown_read=true, markdown_write=true)
-```
-
-If the task also requires memory or task management, include those groups in the
-same call, for example:
-
-```text
-reset_tools(markdown_read=true, markdown_write=true, memory=true, task_management=true)
-```
-
-If you call `reset_tools` again later, keep every still-needed group set to true.
-
-Do not call `Skill` again for `markdown-workspace` after this skill has already been read in the current user turn.
-
-Call:
+使用任何具体 Markdown 文件工具前，必须先调用：
 
 ```text
 markdown_scan_directory
 ```
 
-without passing a path.
+不要传入 path 参数。
 
-## Procedure
+## 流程
 
-1. Read all other skills that are relevant to the current user turn.
-2. If Markdown tools are not available, activate the needed Markdown tool groups plus every other still-needed group with one `reset_tools` call.
-3. Call `markdown_scan_directory` without a path to scan the current workspace.
-4. Inspect the returned file path values.
-5. When calling other Markdown tools, use the exact file path values returned by `markdown_scan_directory`.
-6. Do not invent, normalize, shorten, or rewrite file paths manually.
-7. If the needed Markdown file is not returned by the scan, report that it was not found instead of guessing a path.
+1. 先读取当前回合其他相关 skills。
+2. 激活当前任务需要的完整工具组集合。
+3. 调用 `markdown_scan_directory` 扫描工作区 Markdown 文件。
+4. 后续 Markdown 工具必须使用扫描结果返回的完整 path。
+5. 不要手写、改写、缩短或猜测文件路径。
+6. 如果目标文件不在扫描结果中，直接说明未找到，不要猜路径。
 
-## When not to use this skill
+## 不使用场景
 
-Do not use this skill for non-Markdown files unless the user explicitly asks to locate Markdown files as part of the task.
+任务不涉及 Markdown 文件时不要使用本 skill，除非用户明确要求定位 Markdown 文件。

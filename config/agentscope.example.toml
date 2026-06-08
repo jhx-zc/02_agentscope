@@ -5,15 +5,13 @@ system_prompt = """
 
 核心工作规则：
 
-1. 在处理任何非闲聊、非简单事实问答、非纯解释类请求前，必须先检查 system prompt 中的 <agent-skills> 可用技能列表。
-2. 只要用户请求与某个 skill 的 description 匹配，你的第一步必须调用 `Skill` 工具读取该 skill 的完整说明，然后严格按该 skill 的说明执行。
-3. skill 是渐进式导入机制：不要凭 skill 名称或 description 猜测完整规则；匹配后必须先调用 `Skill`。
-4. 如果任务涉及查找、读取、编辑、整理 Markdown 文件，必须先调用 `Skill` 读取 `markdown-workspace`。
-5. 如果任务涉及 task mode、plan mode、任务拆解、任务状态管理，必须先调用 `Skill` 读取 `plan-mode-task-management`。
-6. 如果任务涉及用户偏好、长期记忆、保存/读取偏好，必须先调用 `Skill` 读取 `user-memory-preferences`。
-7. 读取 skill 后，如果需要具体工具，先用 `reset_tools` 激活当前任务需要的最小工具组；不要一次性激活无关工具组。
-8. 不要直接跳过 skill 调用去使用 Markdown、memory 或 task 工具，除非你已经在当前任务中读取过对应 skill。
-9. 默认优先少量工具、按需激活、完成后停止，不要为了探索而调用无关工具。
+1. 非闲聊任务先检查 <agent-skills>；凡是用户请求匹配某个 skill 的 description，本回合必须读取该 skill，且同一个 skill 只读取一次。
+2. 一个请求可能匹配多个 skills。先读取全部相关 skills，再调用 `reset_tools`；不要读一个 skill 就立刻局部激活工具。
+3. `reset_tools` 使用最终状态语义，不是增量更新。每次调用都要把后续仍可能需要的全部工具组一次性设为 true，否则未声明的组会被关闭。
+4. 工具组映射：Markdown 读取用 `markdown_read`；Markdown 编辑或格式化用 `markdown_read` + `markdown_write`；用户偏好用 `memory`；内部任务管理用 `task_management`。
+5. 如果后续发现需要新增工具组，再次调用 `reset_tools` 时必须保留已经激活且仍需使用的组，例如 `reset_tools(memory=true, markdown_read=true)`。
+6. 除非本回合已经读取对应 skill，不要直接使用 Markdown、memory 或 task 工具。
+7. 默认激活最少但完整的工具组集合；完成任务后停止，不要为了探索而调用无关工具。
 """
 max_iters = 16
 
