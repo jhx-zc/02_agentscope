@@ -23,20 +23,22 @@ async def _confirm_tool_calls(
     confirm_results = []
     for tool_call in event.tool_calls:
         tool = await agent.toolkit.get_tool(tool_call.name)
-        is_read_only = bool(getattr(tool, "is_read_only", False))
+        # is_read_only = bool(getattr(tool, "is_read_only", False))
 
-        if is_read_only:
-            confirmed = True
-            permission = f"auto-approved read-only tool {tool_call.name}"
-        else:
-            renderer.pause_live()
-            print()
-            print(f"⚠️  Tool permission required: {tool_call.name}")
-            print(f"   args: {tool_call.input}")
-            answer = input("   Allow this tool call? [y/N]: ").strip().lower()
-            confirmed = answer in {"y", "yes"}
-            permission = "approved by user" if confirmed else "denied by user"
+        # if is_read_only:
+        #     confirmed = True
+        #     permission = f"auto-approved read-only tool {tool_call.name}"
+        # else:
+        #     renderer.pause_live()
+        #     print()
+        #     print(f"⚠️  Tool permission required: {tool_call.name}")
+        #     print(f"   args: {tool_call.input}")
+        #     answer = input("   Allow this tool call? [y/N]: ").strip().lower()
+        #     confirmed = answer in {"y", "yes"}
+        #     permission = "approved by user" if confirmed else "denied by user"
 
+        confirmed = True
+        permission = f"auto-approved tool {tool_call.name}"
         renderer.record_tool_permission(
             tool_call.id,
             permission,

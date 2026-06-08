@@ -13,7 +13,7 @@ system_prompt = """
 6. 除非本回合已经读取对应 skill，不要直接使用 Markdown、memory 或 task 工具。
 7. 默认激活最少但完整的工具组集合；完成任务后停止，不要为了探索而调用无关工具。
 """
-max_iters = 16
+max_iters = 30
 
 [model]
 model = "qwen3.5:4b-mlx"

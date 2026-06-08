@@ -95,9 +95,76 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
     print(f"🧾 Trace log: {trace_recorder.jsonl_path}")
     print("=" * 50)
 
+    user_input = """
+查看记忆中我当前打开的 Markdown 文件。你现在需要把它整理成一个基础可验收版本。
+
+请使用 Plan Mode 解决问题，不要一开始就直接修改文件。
+
+具体要求如下：
+
+1. 先读取并理解文档整体结构，简单说明你识别到的主要章节。
+2. 不要修改以下章节的正文内容：
+
+   * `## 1. 背景`
+   * `## 7. FAQ`
+3. 读取并确认以下章节内容：
+
+   * `### 3.3 插入新章节`
+   * `## 4. 数据来源`
+   * `## 5. 风险`
+   * `## 6. 待办清单`
+4. 重写 `## 5. 风险` 章节，但保留 `## 5. 风险` 这个标题。
+
+   * 重写后保留 3 条风险。
+   * 每条风险都要包含：
+
+     * `风险：`
+     * `缓解方式：`
+   * 风险描述要比原文更清楚。
+5. 在 `### 3.3 插入新章节` 后插入一个新小节：
+
+   * 标题：`#### 本次修改要点`
+   * 内容简要说明本次修改包括：重写风险章节、插入数据更新频率说明、更新待办清单。
+6. 在 `## 4. 数据来源` 后插入一个新小节：
+
+   * 标题：`### 4.1 数据更新频率`
+   * 用一个简单表格说明不同数据来源的更新频率。
+   * 表格包含三列：
+
+     * 数据来源
+     * 更新频率
+     * 说明
+7. 更新 `## 6. 待办清单` 中的任务状态：
+
+   * 将“支持替换风险章节”标记为已完成。
+   * 将“支持插入数据更新频率说明”标记为已完成。
+   * 其他任务状态保持不变。
+8. 最后检查 Markdown 格式：
+
+   * 标题前后保留空行。
+   * 表格格式保持规范。
+   * 任务列表格式保持规范。
+9. 修改完成后，告诉我：
+
+   * 读取了哪些章节。
+   * 修改了哪个章节。
+   * 插入了哪些新小节。
+   * 更新了哪些任务状态。
+   * 确认没有修改哪些受保护章节。
+
+注意：
+
+* 不要全文重写。
+* 不要修改背景和 FAQ。
+* 不要使用全局字符串替换。
+* 尽量基于标题路径或 section 范围进行修改。
+
+"""
+
     try:
         while True:
-            user_input = input("\n🧑 You: ").strip()
+            if not user_input:
+                user_input = input("\n🧑 You: ").strip()
             if not user_input:
                 continue
             if user_input.lower() == "quit":
@@ -124,6 +191,7 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
                 )
                 raise
             finally:
+                user_input = ""
                 renderer.finish()
                 trace_recorder.end_turn()
     except (KeyboardInterrupt, EOFError):
