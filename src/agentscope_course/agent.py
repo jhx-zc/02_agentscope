@@ -16,6 +16,7 @@ from agentscope_course.console import StreamConsoleRenderer
 from agentscope_course.config import _maybe_number, load_config, load_dotenv
 from agentscope_course.conversation import reply_until_done
 from agentscope_course.models import PatchedOllamaChatModel
+from agentscope_course.trace import TraceRecorder, trace_recorder_context
 
 from agentscope_tools import init_user_memory
 
@@ -88,8 +89,10 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
     Type 'quit' or press Ctrl-C to exit.
     """
     agent = create_agent(load_config(config_path))
+    trace_recorder = TraceRecorder()
     print("=" * 50)
     print("🤖 Agent已就绪 (输入 'quit' 退出)")
+    print(f"🧾 Trace log: {trace_recorder.jsonl_path}")
     print("=" * 50)
 
     try:
@@ -102,12 +105,28 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
                 break
 
             print()  # 换行，准备输出 agent 的流式响应
-            renderer = StreamConsoleRenderer()
-            await reply_until_done(
-                agent,
-                UserMsg(name="user", content=user_input),
-                renderer,
-            )
-            renderer.finish()
+            trace_recorder.start_turn(user_input)
+            renderer = StreamConsoleRenderer(trace_recorder=trace_recorder)
+            try:
+                with trace_recorder_context(trace_recorder):
+                    await reply_until_done(
+                        agent,
+                        UserMsg(name="user", content=user_input),
+                        renderer,
+                    )
+            except Exception as exc:
+                trace_recorder.record_local_event(
+                    "turn_error",
+                    {
+                        "error_type": exc.__class__.__name__,
+                        "message": str(exc),
+                    },
+                )
+                raise
+            finally:
+                renderer.finish()
+                trace_recorder.end_turn()
     except (KeyboardInterrupt, EOFError):
         print("\n👋 再见！")
+    finally:
+        trace_recorder.close()

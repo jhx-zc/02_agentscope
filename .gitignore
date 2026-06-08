@@ -19,3 +19,6 @@ src/*.egg-info/
 
 # codegraph
 .codegraph/
+
+# log
+.agentscope_traces/

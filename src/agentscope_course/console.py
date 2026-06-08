@@ -27,6 +27,8 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.tree import Tree
 
+from agentscope_course.trace import TraceRecorder
+
 _MAX_TOOL_OUTPUT_LINES = 24
 _MAX_TOOL_OUTPUT_CHARS = 4_000
 _EVENT_LOG_PATH = Path(
@@ -107,8 +109,9 @@ class _ToolBatchState:
 class StreamConsoleRenderer:
     """Render AgentScope stream events without breaking text deltas."""
 
-    def __init__(self) -> None:
+    def __init__(self, trace_recorder: TraceRecorder | None = None) -> None:
         self._console = Console()
+        self._trace_recorder = trace_recorder
         self._has_output = False
         self._needs_assistant_label = True
         self._line_open = False
@@ -191,6 +194,26 @@ class StreamConsoleRenderer:
             },
         )
 
+    def record_external_execution_blocked(self, tool_names: list[str]) -> None:
+        """Log external tool calls that this CLI cannot execute."""
+        self._log_local_event(
+            "external_execution_blocked",
+            {
+                "tool_names": tool_names,
+                "tool_count": len(tool_names),
+            },
+        )
+
+    def record_task_continuation(self, task_ids: list[str]) -> None:
+        """Log an automatic continuation triggered by unfinished tasks."""
+        self._log_local_event(
+            "task_continuation",
+            {
+                "task_ids": task_ids,
+                "task_count": len(task_ids),
+            },
+        )
+
     def pause_live(self) -> None:
         """Temporarily stop live rendering before blocking terminal input."""
         if self._live is None:
@@ -231,6 +254,8 @@ class StreamConsoleRenderer:
     def _render_text(self, delta: str | None) -> None:
         if not delta:
             return
+        if self._trace_recorder is not None:
+            self._trace_recorder.record_text_delta(delta)
         self._stop_live()
         if self._needs_assistant_label:
             if self._has_output:
@@ -252,6 +277,12 @@ class StreamConsoleRenderer:
             tool_call_id=event.tool_call_id,
             tool_name=event.tool_call_name,
         )
+        if self._trace_recorder is not None:
+            self._trace_recorder.record_tool_call_start(
+                reply_id=event.reply_id,
+                tool_call_id=event.tool_call_id,
+                tool_name=event.tool_call_name,
+            )
         tool.status = "collecting args"
         self._refresh_live()
         self._has_output = True
@@ -267,6 +298,11 @@ class StreamConsoleRenderer:
             tool_name="unknown",
         )
         tool.args_parts.append(event.delta)
+        if self._trace_recorder is not None:
+            self._trace_recorder.record_tool_call_args_delta(
+                event.tool_call_id,
+                event.delta,
+            )
         self._refresh_live()
 
     def _render_tool_call_end(self, event: ToolCallEndEvent) -> None:
@@ -277,12 +313,19 @@ class StreamConsoleRenderer:
         )
         tool.call_done = True
         tool.status = "ready"
+        if self._trace_recorder is not None:
+            self._trace_recorder.record_tool_call_ready(event.tool_call_id)
         self._refresh_live()
 
     def _render_tool_confirmation_request(
         self,
         event: RequireUserConfirmEvent,
     ) -> None:
+        if self._trace_recorder is not None:
+            self._trace_recorder.record_confirmation_request(
+                event.reply_id,
+                event.tool_calls,
+            )
         for tool_call in event.tool_calls:
             tool = self._ensure_tool(
                 reply_id=event.reply_id,
@@ -359,6 +402,11 @@ class StreamConsoleRenderer:
             **fields,
         }
         self._write_event_log(record)
+        if self._trace_recorder is not None:
+            self._trace_recorder.record_agent_event(
+                event.__class__.__name__,
+                fields,
+            )
 
     def _log_local_event(self, name: str, fields: dict[str, Any]) -> None:
         self._write_event_log(
@@ -368,6 +416,8 @@ class StreamConsoleRenderer:
                 **fields,
             },
         )
+        if self._trace_recorder is not None:
+            self._trace_recorder.record_local_event(name, fields)
 
     def _write_event_log(self, record: dict[str, Any]) -> None:
         if self._event_log_failed:

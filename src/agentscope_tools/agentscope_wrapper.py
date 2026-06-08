@@ -34,6 +34,7 @@ from agentscope.tool import (
     Toolkit,
 )
 
+from agentscope_course.trace import ToolExecution, current_trace_recorder
 from agentscope_tools.ori_tools import (
     WORKSPACE_ROOT,
     SKILLS_ROOTS,
@@ -68,7 +69,37 @@ def _wrap_tool_result(func: Callable[..., Any]) -> Callable[..., ToolChunk]:
 
     @wraps(func)
     def wrapped(**kwargs: Any) -> ToolChunk:
-        result = func(**kwargs)
+        recorder = current_trace_recorder()
+        execution: ToolExecution | None = None
+        if recorder is not None:
+            try:
+                execution = recorder.begin_tool_execution(func.__name__, kwargs)
+            except Exception:
+                execution = None
+
+        try:
+            result = func(**kwargs)
+        except Exception as exc:
+            if recorder is not None and execution is not None:
+                try:
+                    recorder.end_tool_execution(
+                        execution,
+                        status="error",
+                        error=exc,
+                    )
+                except Exception:
+                    pass
+            raise
+
+        if recorder is not None and execution is not None:
+            try:
+                recorder.end_tool_execution(
+                    execution,
+                    status="success",
+                    result=result,
+                )
+            except Exception:
+                pass
         return ToolChunk(
             content=[TextBlock(text=_format_tool_result(result))],
             state=ToolResultState.SUCCESS,

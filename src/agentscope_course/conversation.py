@@ -73,9 +73,11 @@ async def reply_until_done(
                 confirmation_requests.append(event)
 
             elif isinstance(event, RequireExternalExecutionEvent):
-                tool_names = ", ".join(
+                tool_name_list = [
                     tool_call.name for tool_call in event.tool_calls
-                )
+                ]
+                renderer.record_external_execution_blocked(tool_name_list)
+                tool_names = ", ".join(tool_name_list)
                 raise RuntimeError(
                     "This CLI cannot execute external tools yet: "
                     f"{tool_names}",
@@ -104,6 +106,7 @@ async def reply_until_done(
                     not_finish_tasks.append(task.id)
                     break
             if len(not_finish_tasks) > 0:
+                renderer.record_task_continuation(not_finish_tasks)
                 next_input = UserMsg(name="user", content=f'not finished tasks:{','.join(not_finish_tasks)}. Continue your job.')
             else:
                 renderer.close_turn()
