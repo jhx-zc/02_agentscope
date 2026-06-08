@@ -165,6 +165,8 @@ async def ask_agent(config_path: str | Path | None = None) -> None:
         while True:
             if not user_input:
                 user_input = input("\n🧑 You: ").strip()
+            else:
+                print(f"\n🧑 You: {user_input}")
             if not user_input:
                 continue
             if user_input.lower() == "quit":

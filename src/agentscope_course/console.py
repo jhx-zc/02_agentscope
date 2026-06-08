@@ -105,6 +105,17 @@ class _ToolBatchState:
             self.tools[tool_id].done for tool_id in self.order
         )
 
+import re
+def decode_unicode_chinese(text: str) -> str:
+    """
+    只把文本中的 \\uXXXX 转成对应字符，其他内容保持不变
+    """
+    def replace_match(match):
+        code = match.group(0)          # 例如：\u98ce
+        return chr(int(code[2:], 16))  # 98ce -> 风
+
+    return re.sub(r'\\u[0-9a-fA-F]{4}', replace_match, text)
+
 
 class StreamConsoleRenderer:
     """Render AgentScope stream events without breaking text deltas."""
@@ -292,6 +303,7 @@ class StreamConsoleRenderer:
     def _render_tool_args(self, event: ToolCallDeltaEvent) -> None:
         if not event.delta:
             return
+        event.delta = decode_unicode_chinese(event.delta)
         tool = self._ensure_tool(
             reply_id=event.reply_id,
             tool_call_id=event.tool_call_id,
